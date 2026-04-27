@@ -1,0 +1,31 @@
+{
+  "name": "ofzen-backend",
+  "version": "1.0.0",
+  "description": "Ofzen Management System Backend API",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "seed": "node src/seeds/index.seed.js"
+  },
+  "keywords": [],
+  "author": "Ofzen Technologies",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.4",
+    "nodemailer": "^6.9.13",
+    "puppeteer": "^22.7.1",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

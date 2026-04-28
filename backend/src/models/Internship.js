@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const scheduleItemSchema = new mongoose.Schema(
   {
@@ -6,28 +6,39 @@ const scheduleItemSchema = new mongoose.Schema(
     topic: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
-const internshipSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true }, // e.g., FSD - Intern
-  domain: { 
-    type: String, 
-    required: true, 
-    enum: ['Full Stack', 'Frontend', 'UI/UX', 'AI + Full Stack'] 
+const internshipSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, trim: true }, // e.g., FSD - Intern
+    domain: {
+      type: String,
+      required: true,
+      enum: [
+        "Full Stack",
+        "Frontend",
+        "UI/UX",
+        "Generative AI",
+        "Python",
+        "Data Analytics",
+        "Cloud Computing",
+      ],
+    },
+    description: { type: String, trim: true },
+    openings: { type: Number, default: 0 }, // Indicative openings for display
+    status: {
+      type: String,
+      enum: ["active", "closed"],
+      default: "active",
+    },
+    fee: { type: Number, required: true, default: 899 }, // Global fee for this internship role
+    durationWeeks: { type: Number, required: true }, // e.g., 8
+    certificate: { type: String, required: true, trim: true }, // e.g., Completion Certificate, LOR
+    techStack: { type: [String], required: true, default: [] }, // e.g., ['React', 'Node.js']
+    schedule: [scheduleItemSchema],
   },
-  description: { type: String, trim: true },
-  openings: { type: Number, default: 0 }, // Indicative openings for display
-  status: { 
-    type: String, 
-    enum: ['active', 'closed'], 
-    default: 'active' 
-  },
-  fee: { type: Number, required: true, default: 899 }, // Global fee for this internship role
-  durationWeeks: { type: Number, required: true }, // e.g., 8
-  certificate: { type: String, required: true, trim: true }, // e.g., Completion Certificate, LOR
-  techStack: { type: [String], required: true, default: [] }, // e.g., ['React', 'Node.js']
-  schedule: [scheduleItemSchema],
-}, { timestamps: true });
+  { timestamps: true },
+);
 
-module.exports = mongoose.model('Internship', internshipSchema);
+module.exports = mongoose.model("Internship", internshipSchema);

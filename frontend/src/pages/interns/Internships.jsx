@@ -17,8 +17,10 @@ const DOMAIN_OPTIONS = [
   "Full Stack",
   "Frontend",
   "UI/UX",
-  "AI + Full Stack",
+  "Generative AI",
   "Python",
+  "Data Analytics",
+  "Cloud Computing",
 ];
 
 const Internships = () => {

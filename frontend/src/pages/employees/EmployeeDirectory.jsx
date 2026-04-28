@@ -12,12 +12,14 @@ import {
 } from "../../components/ui";
 import { Users, Plus, Edit2, Trash2, KeyRound } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
+import { usePermissions } from "../../hooks/usePermissions";
 import { employeesApi, usersApi, profilesApi } from "../../api";
 import toast from "react-hot-toast";
 
 const generateTempPassword = () => Math.random().toString(36).slice(-8) + "A1!";
 
 const EmployeeDirectory = () => {
+  const { can } = usePermissions();
   const {
     data: empData,
     loading: empLoading,
@@ -297,14 +299,16 @@ const EmployeeDirectory = () => {
       label: "Actions",
       render: (_, row) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => openModal(row)}
-            className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors rounded-md hover:bg-white/5"
-            title="Edit"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          {row.isActive && (
+          {can("employees.edit") && (
+            <button
+              onClick={() => openModal(row)}
+              className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors rounded-md hover:bg-white/5"
+              title="Edit"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+          )}
+          {can("employees.delete") && row.isActive && (
             <button
               onClick={() => handleDeactivate(row)}
               className="p-1.5 text-[var(--color-text-muted)] hover:text-red-500 transition-colors rounded-md hover:bg-white/5"
@@ -324,9 +328,11 @@ const EmployeeDirectory = () => {
         title="Employee Directory"
         subtitle="Manage all company employees, HR data, and payroll details."
         action={
-          <Button onClick={() => openModal()} className="shadow-sm">
-            <Plus className="w-4 h-4" /> Add Employee
-          </Button>
+          can("employees.create") && (
+            <Button onClick={() => openModal()} className="shadow-sm">
+              <Plus className="w-4 h-4" /> Add Employee
+            </Button>
+          )
         }
       />
 

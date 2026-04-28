@@ -22,7 +22,6 @@ const publicInternshipRoutes = require("./routes/public/internships");
 const internshipRoutes = require("./routes/internships");
 const templateRoutes = require("./routes/templates");
 
-
 // ─── App Init ──────────────────────────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -31,13 +30,22 @@ const PORT = process.env.PORT || 5001;
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || origin.startsWith("http://localhost")) {
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        "http://localhost:5173",
+        "https://www.ofzen.in",
+        "https://ofzen.in",
+      ];
+      if (
+        !origin ||
+        allowedOrigins.some((allowed) => allowed && origin.startsWith(allowed))
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // allow cookies
+    credentials: true,
   }),
 );
 app.use(express.json());
@@ -61,7 +69,6 @@ app.use("/api/mail", mailRoutes);
 app.use("/api/public/internships", publicInternshipRoutes);
 app.use("/api/internships", internshipRoutes);
 app.use("/api/templates", templateRoutes);
-
 
 // ─── Health Check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {

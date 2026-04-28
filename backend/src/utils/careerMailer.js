@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 /**
  * Send a professional registration success email to the student.
@@ -9,11 +9,11 @@ const sendRegistrationSuccessEmail = async (studentData) => {
 
   // 1. Create transporter
   const transporter = nodemailer.createTransport({
-    host: process.env.CAREERS_MAIL_HOST || 'smtp.zoho.in',
+    host: process.env.CAREERS_MAIL_HOST || "smtp.zoho.in",
     port: parseInt(process.env.CAREERS_MAIL_PORT) || 465,
     secure: true, // Zoho SSL
     auth: {
-      user: process.env.CAREERS_MAIL_USER || 'careers@ofzen.in',
+      user: process.env.CAREERS_MAIL_USER || "careers@ofzen.in",
       pass: process.env.CAREERS_MAIL_PASS,
     },
   });
@@ -76,7 +76,7 @@ const sendRegistrationSuccessEmail = async (studentData) => {
 
   // 3. Send email
   await transporter.sendMail({
-    from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || 'careers@ofzen.in'}>`,
+    from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
     subject: `Internship Registration Successful — ${refNumber}`,
     html,
@@ -90,20 +90,20 @@ const sendApprovalEmails = async (data) => {
   const { name, email, offerLetterPath, batchName, domain } = data;
 
   const transporter = nodemailer.createTransport({
-    host: process.env.CAREERS_MAIL_HOST || 'smtp.zoho.in',
+    host: process.env.CAREERS_MAIL_HOST || "smtp.zoho.in",
     port: parseInt(process.env.CAREERS_MAIL_PORT) || 465,
     secure: true,
     auth: {
-      user: process.env.CAREERS_MAIL_USER || 'careers@ofzen.in',
+      user: process.env.CAREERS_MAIL_USER || "careers@ofzen.in",
       pass: process.env.CAREERS_MAIL_PASS,
     },
   });
 
   // 1. Send Offer Letter Email
   await transporter.sendMail({
-    from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || 'careers@ofzen.in'}>`,
+    from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
-    subject: `Internship Offer Letter — ${name} — Ofzen Technologies`,
+    subject: `Internship Onboarding Confirmation – Welcome to Ofzen!`,
     html: `
       <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
         <h2>Congratulations ${name}!</h2>
@@ -116,34 +116,84 @@ const sendApprovalEmails = async (data) => {
     `,
     attachments: [
       {
-        filename: `Offer_Letter_${name.replace(/\s+/g, '_')}.pdf`,
+        filename: `Offer_Letter_${name.replace(/\s+/g, "_")}.pdf`,
         path: offerLetterPath,
       },
     ],
   });
 
   // 2. Send Login Details Email
-  const loginUrl = process.env.FRONTEND_URL || 'https://portal.ofzen.in';
+  const loginUrl = process.env.FRONTEND_URL || "https://work.ofzen.in";
   await transporter.sendMail({
-    from: `"Ofzen Support" <${process.env.CAREERS_MAIL_USER || 'careers@ofzen.in'}>`,
+    from: `"Ofzen Support" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
     subject: `Welcome to Ofzen — Student Portal Access`,
     html: `
-      <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
-        <h2>Welcome to the Team, ${name}!</h2>
-        <p>Your account has been activated. you can now log into the Ofzen Student Portal to access your curriculum, submit assignments, and track your progress.</p>
-        
-        <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p style="margin: 0;"><strong>Portal URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
-          <p style="margin: 10px 0 0 0;"><strong>Username:</strong> ${email}</p>
-          <p style="margin: 5px 0 0 0;"><strong>Password:</strong> The password you created during registration</p>
-        </div>
+      <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif;">
 
-        <p>If you have forgotten your password, you can use the "Forgot Password" link on the login page.</p>
-        <p>We look forward to seeing your work!</p>
-        <br>
-        <p>Best Regards,<br>Ofzen Technologies</p>
-      </div>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f6f8; padding:20px 0;">
+    <tr>
+      <td align="center">
+
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background:#4f46e5; color:#ffffff; padding:20px; text-align:center;">
+              <h2 style="margin:0;">Welcome to Ofzen Technologies 🎉</h2>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333; font-size:15px; line-height:1.6;">
+              
+              <p>Dear <strong>${name}</strong>,</p>
+
+              <p>Congratulations!</p>
+
+              <p>
+                We are delighted to inform you that your application for the 
+                <strong>${batchName} (${domain}) internship program</strong> has been successfully approved.
+              </p>
+
+              <p>
+                Please find your official <strong>Internship Offer Letter</strong> attached to this email. 
+                Kindly review the document carefully and follow any instructions mentioned within.
+              </p>
+
+              <p>
+                We are excited to have you on board and look forward to your contributions. 
+                This internship will provide you with valuable hands-on experience and learning opportunities.
+              </p>
+
+              <p>
+                If you have any questions or need assistance, feel free to reach out to us.
+              </p>
+
+              <br>
+
+              <p>
+                Warm regards,<br>
+                <strong>Team Ofzen</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f1f5f9; padding:15px; text-align:center; font-size:12px; color:#666;">
+              © 2026 Ofzen Technologies. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+</body>
     `,
   });
 };

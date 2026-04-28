@@ -298,7 +298,7 @@ const onboardBatch = asyncHandler(async (req, res) => {
         .populate("userId", "name email")
         .populate({
           path: "batchId",
-          populate: { path: "internshipId", select: "title" },
+          populate: { path: "internshipId", select: "title domain" },
         });
 
       // Update Status

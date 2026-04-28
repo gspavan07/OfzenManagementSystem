@@ -1,25 +1,30 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Name is required'],
+      required: [true, "Name is required"],
       trim: true,
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       minlength: 8,
       select: false, // never return password in queries
+    },
+    gender: {
+      type: String,
+      trim: true,
+      enum: ["Male", "Female", "Other", "Prefer not to say"],
     },
     phone: {
       type: String,
@@ -31,8 +36,8 @@ const userSchema = new mongoose.Schema(
     },
     profileId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Profile',
-      required: [true, 'Profile is required'],
+      ref: "Profile",
+      required: [true, "Profile is required"],
     },
     isActive: {
       type: Boolean,
@@ -43,12 +48,12 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ─── Hash password before saving ──────────────────────────────────────────────
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
@@ -57,4 +62,4 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

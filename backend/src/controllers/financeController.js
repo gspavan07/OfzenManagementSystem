@@ -36,8 +36,11 @@ const getRevenue = asyncHandler(async (req, res) => {
   const InternBatch = require('../models/InternBatch');
 
   // 1. Get batches for fee info
-  const batches = await InternBatch.find().lean();
-  const batchFeeMap = batches.reduce((acc, b) => { acc[b._id.toString()] = b.fee || 0; return acc; }, {});
+  const batches = await InternBatch.find().populate('internshipId', 'fee').lean();
+  const batchFeeMap = batches.reduce((acc, b) => { 
+    acc[b._id.toString()] = b.internshipId?.fee || 0; 
+    return acc; 
+  }, {});
 
   // 2. Find paid interns within the filtered date range (if any)
   const internFilter = { paymentStatus: 'paid' };
@@ -280,12 +283,12 @@ const getInternRevenue = asyncHandler(async (req, res) => {
   const InternBatch = require('../models/InternBatch');
 
   // 1. Get all batches to map batchId to fee
-  const batches = await InternBatch.find().lean();
+  const batches = await InternBatch.find().populate('internshipId', 'fee domain').lean();
   const batchFeeMap = batches.reduce((acc, b) => {
     acc[b._id.toString()] = { 
-      fee: b.fee || 0, 
+      fee: b.internshipId?.fee || 0, 
       name: b.batchName, 
-      domain: b.domain 
+      domain: b.internshipId?.domain || 'Unknown' 
     };
     return acc;
   }, {});

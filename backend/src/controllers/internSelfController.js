@@ -121,7 +121,8 @@ const generateCertificate = asyncHandler(async (req, res) => {
 
   const intern = await Intern.findById(internId)
     .populate('userId', 'name email')
-    .populate('batchId');
+    .populate('batchId')
+    .populate('internshipId');
 
   if (!intern) { res.status(404); throw new Error('Intern not found'); }
   if (intern.completionStatus !== 'completed') {
@@ -144,6 +145,7 @@ const generateCertificate = asyncHandler(async (req, res) => {
       intern,
       user: intern.userId,
       batch: intern.batchId,
+      internship: intern.internshipId,
       certificate,
       outputDir: PDF_DIR,
     });
@@ -160,7 +162,11 @@ const generateCertificate = asyncHandler(async (req, res) => {
 const verifyCertificate = asyncHandler(async (req, res) => {
   const cert = await Certificate.findOne({ certificateId: req.params.certificateId })
     .populate({ path: 'internId', populate: { path: 'userId', select: 'name' } })
-    .populate('batchId', 'batchName domain');
+    .populate({
+      path: 'batchId',
+      select: 'batchName',
+      populate: { path: 'internshipId', select: 'domain' }
+    });
 
   if (!cert) {
     return res.json({ success: true, valid: false, message: 'Certificate not found' });
@@ -173,7 +179,7 @@ const verifyCertificate = asyncHandler(async (req, res) => {
       certificateId: cert.certificateId,
       internName: cert.internId?.userId?.name,
       batch: cert.batchId?.batchName,
-      domain: cert.batchId?.domain,
+      domain: cert.batchId?.internshipId?.domain || 'Unknown',
       issueDate: cert.issueDate,
     },
   });

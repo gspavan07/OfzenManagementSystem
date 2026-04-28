@@ -1,5 +1,14 @@
 const mongoose = require('mongoose');
 
+const scheduleItemSchema = new mongoose.Schema(
+  {
+    week: { type: Number, required: true },
+    topic: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 const internshipSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true }, // e.g., FSD - Intern
   domain: { 
@@ -14,7 +23,11 @@ const internshipSchema = new mongoose.Schema({
     enum: ['active', 'closed'], 
     default: 'active' 
   },
-  fee: { type: Number, required: true, default: 899 } // Global fee for this internship role
+  fee: { type: Number, required: true, default: 899 }, // Global fee for this internship role
+  durationWeeks: { type: Number, required: true }, // e.g., 8
+  certificate: { type: String, required: true, trim: true }, // e.g., Completion Certificate, LOR
+  techStack: { type: [String], required: true, default: [] }, // e.g., ['React', 'Node.js']
+  schedule: [scheduleItemSchema],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Internship', internshipSchema);

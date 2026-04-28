@@ -1,103 +1,352 @@
-const path = require('path');
-const { generatePdfFromHtml } = require('../../utils/pdfGenerator');
+const path = require("path");
+const fs = require("fs");
+const { generatePdfFromHtml } = require("../../utils/pdfGenerator");
 
 /**
  * Generate Certificate HTML.
  */
 const generateCertificateHtml = (data) => {
-  const { user, batch, certificate } = data;
+  const { user, batch, certificate, internship } = data;
 
-  const companyName = process.env.COMPANY_NAME || 'Ofzen Technologies';
-  const companyWebsite = process.env.COMPANY_WEBSITE || 'www.ofzen.in';
-  const certVerifyBase = process.env.CERT_VERIFY_BASE_URL || 'http://localhost:5173';
+  const logoPath = path.join(__dirname, "logo.png");
+  let logoBase64 = "";
+  const dheerajSignPath = path.join(__dirname, "dheerajSignature.png");
+  let dheerajSignBase64 = "";
+  const pavanSignPath = path.join(__dirname, "pavanSignature.png");
+  let pavanSignBase64 = "";
+  const googlePath = path.join(__dirname, "google.png");
+  let googleBase64 = "";
+  const msmePath = path.join(__dirname, "msme.png");
+  let msmeBase64 = "";
+  try {
+    const logoBuffer = fs.readFileSync(logoPath);
+    logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Logo not found:", err);
+  }
+  try {
+    const dheerajSignBuffer = fs.readFileSync(dheerajSignPath);
+    dheerajSignBase64 = `data:image/png;base64,${dheerajSignBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Signature not found:", err);
+  }
+  try {
+    const pavanSignBuffer = fs.readFileSync(pavanSignPath);
+    pavanSignBase64 = `data:image/png;base64,${pavanSignBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Signature not found:", err);
+  }
+  try {
+    const googleBuffer = fs.readFileSync(googlePath);
+    googleBase64 = `data:image/png;base64,${googleBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Google not found:", err);
+  }
+  try {
+    const msmeBuffer = fs.readFileSync(msmePath);
+    msmeBase64 = `data:image/png;base64,${msmeBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Msme not found:", err);
+  }
+
+  const companyName = process.env.COMPANY_NAME || "Ofzen Technologies";
+  const companyAddress =
+    process.env.COMPANY_ADDRESS || "Kakinada, Andhra Pradesh";
+  const companyWebsite = process.env.COMPANY_WEBSITE || "www.ofzen.in";
+  const companyEmail = "support@ofzen";
+  const certVerifyBase =
+    process.env.CERT_VERIFY_BASE_URL || "http://localhost:5173";
   const verifyUrl = `${certVerifyBase}/verify/${certificate.certificateId}`;
 
-  const issueDate = new Date(certificate.issueDate).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric',
+  const startDate = new Date(batch.startDate).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const endDate = new Date(batch.endDate).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
-  return `<!DOCTYPE html>
+  return `
+  <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Georgia', 'Times New Roman', serif; background: #fff; color: #1a1a2e; }
-  .page { width: 100%; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; position: relative; }
-  .border-outer { border: 8px solid #6366f1; padding: 4px; width: 100%; }
-  .border-inner { border: 2px solid #c7d2fe; padding: 40px 50px; text-align: center; }
-  .logo-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px; }
-  .company-name { font-size: 28px; font-weight: 700; color: #6366f1; letter-spacing: 1px; font-family: 'Segoe UI', sans-serif; }
-  .cert-of { font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 3px; margin: 20px 0 10px; font-family: 'Segoe UI', sans-serif; }
-  .cert-title { font-size: 42px; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; font-style: italic; }
-  .divider { width: 80px; height: 3px; background: linear-gradient(90deg, #6366f1, #a5b4fc); margin: 0 auto 20px; border-radius: 2px; }
-  .presented-to { font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 2px; font-family: 'Segoe UI', sans-serif; }
-  .intern-name { font-size: 36px; font-weight: 700; color: #4f46e5; margin: 8px 0 16px; border-bottom: 2px solid #c7d2fe; padding-bottom: 12px; display: inline-block; }
-  .body-text { font-size: 14px; color: #374151; line-height: 1.8; max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', sans-serif; }
-  .domain-highlight { font-size: 18px; font-weight: 700; color: #6366f1; }
-  .details-row { display: flex; justify-content: center; gap: 40px; margin: 24px 0; }
-  .detail-item { text-align: center; }
-  .detail-item .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #9ca3af; font-family: 'Segoe UI', sans-serif; }
-  .detail-item .value { font-size: 14px; font-weight: 600; color: #1a1a2e; font-family: 'Segoe UI', sans-serif; margin-top: 2px; }
-  .sig-row { display: flex; justify-content: space-between; margin-top: 40px; padding: 0 40px; }
-  .sig-item { text-align: center; min-width: 150px; }
-  .sig-line { border-top: 1.5px solid #374151; padding-top: 6px; margin-top: 30px; font-size: 12px; font-family: 'Segoe UI', sans-serif; }
-  .cert-id-box { margin-top: 20px; background: #f0f0ff; border-radius: 6px; padding: 10px 20px; display: inline-block; font-family: 'Segoe UI', sans-serif; }
-  .cert-id-label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
-  .cert-id-value { font-size: 16px; font-weight: 700; color: #6366f1; letter-spacing: 1px; }
-  .verify-text { font-size: 10px; color: #9ca3af; margin-top: 4px; }
-</style>
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+      .watermark {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: -1;
+          color: #2563eb;
+          font-size: 180px;
+          font-weight: 700;
+          opacity: 0.1;
+          pointer-events: none;
+          user-select: none;
+      }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.7;
+        }
+
+        .letterhead {
+            padding: 50px 50px 20px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .company-name {
+            font-size: 28px;
+            font-weight: 800;
+            color: #2563eb;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-container img {
+            height: 50px;
+            width: auto;
+        }
+
+        .company-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 13px;
+            gap: 1px;
+            color: #6b7280;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .body {
+            padding: 10px 60px;
+        }
+
+        .doc-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .body-text {
+            margin-bottom: 14px;
+            font-size: 16px;
+            text-align: justify;
+        }
+
+        .highlight-box {
+            background: #f0f0ff;
+            border-left: 4px solid #2563eb;
+            padding: 14px 18px;
+            border-radius: 0 6px 6px 0;
+            margin: 20px 0;
+        }
+
+        .highlight-box table {
+            width: 100%;
+        }
+
+        .highlight-box td {
+            padding: 5px 0;
+        }
+
+        .highlight-box td:first-child {
+            font-weight: 600;
+            color: #4f46e5;
+            width: 180px;
+        }
+
+        .signature-section {
+        position: absolute;
+        bottom: 300px;
+        left: 60px;
+        right: 60px;
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .sig-box {
+        text-align: center;
+    }
+
+    .dSign-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .dSign-container img {
+      height: 70px;
+      width: 150px;
+    }
+
+    .pSign-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .pSign-container img {
+      height: 50px;
+      margin-bottom: 20px;
+      width: 150px;
+    }
+
+    .sig-line {
+      border-top: 1px solid #1a1a2e;
+      padding-top: 6px;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .partner-container{
+        position: absolute;
+        bottom: 150px;
+        left: 60px;
+        right: 60px;
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .partner-logo{
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .partner-logo .google{
+        height: 80px;
+        width: auto;
+    }
+
+    .partner-logo .msme{
+        height: 100px;
+        width: auto;
+    }
+
+    .footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 14px 40px;
+        background: #f8f9ff;
+        border-top: 1px solid #e8ecf8;
+        font-size: 10px;
+        color: #9ca3af;
+        text-align: center;
+    }
+    </style>
 </head>
+
 <body>
-<div class="page">
-  <div class="border-outer">
-    <div class="border-inner">
-      <div class="company-name">${companyName}</div>
-      <div class="cert-of">Certificate of Completion</div>
-      <div class="divider"></div>
-
-      <div class="presented-to">This is to certify that</div>
-      <div class="intern-name">${user.name}</div>
-
-      <p class="body-text">
-        has successfully completed the <span class="domain-highlight">${batch.domain} Internship Program</span><br>
-        at ${companyName}, demonstrating dedication, technical proficiency, and a commitment to growth.
-      </p>
-
-      <div class="details-row">
-        <div class="detail-item">
-          <div class="label">Batch</div>
-          <div class="value">${batch.batchName}</div>
-        </div>
-        <div class="detail-item">
-          <div class="label">Duration</div>
-          <div class="value">${batch.durationWeeks} Weeks</div>
-        </div>
-        <div class="detail-item">
-          <div class="label">Issue Date</div>
-          <div class="value">${issueDate}</div>
-        </div>
-      </div>
-
-      <div class="cert-id-box">
-        <div class="cert-id-label">Certificate ID</div>
-        <div class="cert-id-value">${certificate.certificateId}</div>
-        <div class="verify-text">Verify at: ${verifyUrl}</div>
-      </div>
-
-      <div class="sig-row">
-        <div class="sig-item">
-          <div class="sig-line">Authorized Signatory<br><strong>${companyName}</strong></div>
-        </div>
-        <div class="sig-item">
-          <div class="sig-line">Program Mentor<br><strong>${batch.domain} Track</strong></div>
-        </div>
-      </div>
-    </div>
+  <div class="watermark">
+  <p>OFZEN</p>
   </div>
-</div>
+    <div class="container">
+        <div class="letterhead">
+            <div class="logo-container">
+                ${logoBase64 ? `<img src="${logoBase64}" alt="Logo">` : ""}
+            </div>
+            <div class="company-name">${companyName}</div>
+            <div class="company-details">
+                <p>${companyAddress}</p>
+                <p>${companyEmail} | ${companyWebsite}</p>
+            </div>
+        </div>
+
+        <div class="body">
+
+            <div class="doc-title">Certificate of Internship</div>
+
+            <p class="body-text">
+                This is to certify that <strong>${user.name}</strong> has done his internship as a
+                <strong>${internship?.title || batch?.role}</strong> at
+                <strong>${companyName}</strong> from <strong>${startDate}</strong> -
+                <strong>${endDate}</strong>.
+            </p>
+
+            <p class="body-text">
+                During the tenure of this internship, <strong>${user.name}</strong> demonstrated commendable dedication,
+                professionalism, and enthusiasm. Actively contributed to real-world projects and
+                working under the guidance of our experienced mentors.
+            </p>
+
+            <p class="body-text">
+                They maintained a cooperative and respectful approach in their interactions, which made them a valued member 
+                of the team. We appreciate the efforts and contributions they have made during their tenure with us.
+            </p>
+
+            <p class="body-text">
+                We sincerely wish them every success in their future endeavors and are confident that they will continue to 
+                grow and excel in their professional journey.
+            </p>
+
+            <div class="signature-section">
+                <div class="sig-box">
+                    <div class="dSign-container">
+                        ${dheerajSignBase64 ? `<img src="${dheerajSignBase64}" alt="Signature">` : ""}
+                    </div>
+                    <div class="sig-line">
+                        Dheeraj Bathi
+                        <div class="sig-name">${companyName}</div>
+                    </div>
+                </div>
+                
+                <div class="sig-box">
+                    <div class="pSign-container">
+                        ${pavanSignBase64 ? `<img src="${pavanSignBase64}" alt="Signature">` : ""}
+                    </div>
+                    <div class="sig-line">
+                        Pavan Gollapalli
+                        <div class="sig-name">${companyName}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="partner-container">
+              <div class="partner-logo">
+                  ${googleBase64 ? `<img class="google" src="${googleBase64}" alt="Logo">` : ""}
+              </div>
+              
+              <div class="partner-logo">
+                  ${msmeBase64 ? `<img class="msme" src="${msmeBase64}" alt="Logo">` : ""}
+              </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            ${companyName} | ${companyAddress} | ${companyEmail} | ${companyWebsite}
+        </div>
+    </div>
 </body>
-</html>`;
+</html>
+  `;
 };
 
 /**

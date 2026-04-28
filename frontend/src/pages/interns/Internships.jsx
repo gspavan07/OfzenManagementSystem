@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   SectionHeader,
   Card,
@@ -35,6 +35,11 @@ const Internships = () => {
   const [openings, setOpenings] = useState(0);
   const [fee, setFee] = useState(899);
   const [status, setStatus] = useState("active");
+  const [durationWeeks, setDurationWeeks] = useState("");
+  const [certificate, setCertificate] = useState("");
+  const [techStack, setTechStack] = useState([]);
+  const [techInput, setTechInput] = useState("");
+  const techInputRef = useRef(null);
 
   const openModal = (internship = null) => {
     if (internship) {
@@ -45,6 +50,9 @@ const Internships = () => {
       setOpenings(internship.openings);
       setFee(internship.fee);
       setStatus(internship.status);
+      setDurationWeeks(internship.durationWeeks ?? "");
+      setCertificate(internship.certificate || "");
+      setTechStack(internship.techStack || []);
     } else {
       setEditingId(null);
       setTitle("");
@@ -53,15 +61,40 @@ const Internships = () => {
       setOpenings(0);
       setFee(899);
       setStatus("active");
+      setDurationWeeks("");
+      setCertificate("");
+      setTechStack([]);
     }
+    setTechInput("");
     setModalOpen(true);
   };
+
+  const addTechTag = (raw) => {
+    const tags = raw.split(",").map((t) => t.trim()).filter(Boolean);
+    setTechStack((prev) => {
+      const merged = [...prev];
+      tags.forEach((t) => { if (!merged.includes(t)) merged.push(t); });
+      return merged;
+    });
+    setTechInput("");
+  };
+
+  const handleTechKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      if (techInput.trim()) addTechTag(techInput);
+    } else if (e.key === "Backspace" && !techInput && techStack.length > 0) {
+      setTechStack((prev) => prev.slice(0, -1));
+    }
+  };
+
+  const removeTechTag = (tag) => setTechStack((prev) => prev.filter((t) => t !== tag));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { title, domain, description, openings, fee, status };
+      const payload = { title, domain, description, openings, fee, status, durationWeeks: Number(durationWeeks), certificate, techStack };
       if (editingId) {
         await internshipsApi.update(editingId, payload);
         toast.success("Internship role updated");
@@ -99,6 +132,27 @@ const Internships = () => {
           <div className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">{row.domain}</div>
         </div>
       ),
+    },
+    {
+      key: "durationWeeks",
+      label: "Duration",
+      render: (val) => <span className="text-[var(--color-text-secondary)]">{val ? `${val} wks` : "—"}</span>,
+    },
+    {
+      key: "techStack",
+      label: "Tech Stack",
+      render: (val) => (
+        <div className="flex flex-wrap gap-1">
+          {(val || []).map((t) => (
+            <Badge key={t} variant="secondary">{t}</Badge>
+          ))}
+        </div>
+      ),
+    },
+    {
+      key: "certificate",
+      label: "Certificate",
+      render: (val) => <span className="text-xs text-[var(--color-text-muted)]">{val || "—"}</span>,
     },
     {
       key: "fee",
@@ -207,6 +261,16 @@ const Internships = () => {
             />
 
             <Input
+              label="Duration (Weeks)"
+              type="number"
+              min={1}
+              value={durationWeeks}
+              onChange={(e) => setDurationWeeks(e.target.value)}
+              placeholder="e.g. 8"
+              required
+            />
+
+            <Input
               label="Indicative Openings"
               type="number"
               value={openings}
@@ -226,6 +290,54 @@ const Internships = () => {
                 <option value="active">Active (Visible for registration)</option>
                 <option value="closed">Closed</option>
               </select>
+            </div>
+
+            {/* Tech Stack Tag Input */}
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                Tech Stack <span className="text-[var(--color-primary)] ml-0.5">*</span>
+              </label>
+              <div
+                className="w-full min-h-[42px] flex flex-wrap gap-1.5 items-center bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 cursor-text"
+                onClick={() => techInputRef.current?.focus()}
+              >
+                {techStack.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-primary)]/15 text-[var(--color-primary)] border border-[var(--color-primary)]/30"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); removeTechTag(tag); }}
+                      className="hover:text-red-400 transition-colors leading-none"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  ref={techInputRef}
+                  type="text"
+                  value={techInput}
+                  onChange={(e) => setTechInput(e.target.value)}
+                  onKeyDown={handleTechKeyDown}
+                  onBlur={() => { if (techInput.trim()) addTechTag(techInput); }}
+                  placeholder={techStack.length === 0 ? "Type & press Enter or comma…" : ""}
+                  className="flex-1 min-w-[120px] bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
+                />
+              </div>
+              <p className="text-xs text-[var(--color-text-muted)]">Press Enter or comma to add each technology.</p>
+            </div>
+
+            <div className="md:col-span-2">
+              <Input
+                label="Certificate / What We Provide at End"
+                value={certificate}
+                onChange={(e) => setCertificate(e.target.value)}
+                placeholder="e.g. Completion Certificate, LOR, Offer Letter"
+                required
+              />
             </div>
 
             <div className="md:col-span-2">

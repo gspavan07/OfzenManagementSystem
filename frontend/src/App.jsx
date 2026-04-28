@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
@@ -23,7 +23,6 @@ import AccountSettings from "./pages/settings/AccountSettings";
 import InternRevenue from "./pages/interns/InternRevenue";
 import DocumentTemplates from "./pages/settings/DocumentTemplates";
 
-
 // Placeholder Pages (will be implemented next)
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center h-[60vh]">
@@ -38,10 +37,13 @@ const RootRedirect = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (user.permissions?.revenue?.view) return <Navigate to="/dashboard" replace />;
-  if (user.permissions?.internSelf?.viewProfile) return <Navigate to="/intern/dashboard" replace />;
-  if (user.permissions?.mentorTools?.viewAssignedBatches) return <Navigate to="/mentor/batches" replace />;
-  
+  if (user.permissions?.revenue?.view)
+    return <Navigate to="/dashboard" replace />;
+  if (user.permissions?.internSelf?.viewProfile)
+    return <Navigate to="/intern/dashboard" replace />;
+  if (user.permissions?.mentorTools?.viewAssignedBatches)
+    return <Navigate to="/mentor/batches" replace />;
+
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -128,14 +130,15 @@ function App() {
               <Route path="/announcements" element={<Announcements />} />
             </Route>
 
-
-
             {/* Settings */}
             <Route
               element={<ProtectedRoute permission="profileManagement.view" />}
             >
               <Route path="/settings/profiles" element={<ProfileBuilder />} />
-              <Route path="/settings/templates" element={<DocumentTemplates />} />
+              <Route
+                path="/settings/templates"
+                element={<DocumentTemplates />}
+              />
             </Route>
 
             <Route path="/settings/account" element={<AccountSettings />} />

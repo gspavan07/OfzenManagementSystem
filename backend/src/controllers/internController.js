@@ -66,30 +66,31 @@ const getBatchById = asyncHandler(async (req, res) => {
 const createBatch = asyncHandler(async (req, res) => {
   const {
     batchName,
-    domain,
-    stack,
-    durationWeeks,
+    internshipId,
     startDate,
     endDate,
     mentorId,
-    fee,
-    schedule,
+    mentorDay,
+    stipend,
+    status,
   } = req.body;
-  if (!batchName || !domain || !startDate || !endDate) {
+
+  if (!batchName || !internshipId || !startDate || !endDate) {
     res.status(400);
-    throw new Error("batchName, domain, startDate, and endDate are required");
+    throw new Error(
+      "batchName, internshipId, startDate, and endDate are required",
+    );
   }
 
   const batch = await InternBatch.create({
     batchName,
-    domain,
-    stack,
-    durationWeeks,
+    internshipId,
     startDate,
     endDate,
     mentorId,
-    fee,
-    schedule,
+    mentorDay,
+    stipend,
+    status,
   });
   res.status(201).json({ success: true, batch });
 });
@@ -104,15 +105,12 @@ const updateBatch = asyncHandler(async (req, res) => {
 
   const fields = [
     "batchName",
-    "domain",
-    "stack",
-    "durationWeeks",
     "startDate",
     "endDate",
     "mentorId",
-    "fee",
+    "mentorDay",
+    "stipend",
     "status",
-    "schedule",
   ];
   fields.forEach((f) => {
     if (req.body[f] !== undefined) batch[f] = req.body[f];
@@ -134,7 +132,14 @@ const getInterns = asyncHandler(async (req, res) => {
 
   const interns = await Intern.find(filter)
     .populate("userId", "name email phone")
-    .populate("batchId", "batchName domain");
+    .populate({
+      path: "batchId",
+      select: "batchName",
+    })
+    .populate({
+      path: "internshipId",
+      select: "title domain",
+    });
 
   res.json({ success: true, interns });
 });
@@ -145,8 +150,13 @@ const getInternById = asyncHandler(async (req, res) => {
     .populate("userId", "name email phone")
     .populate(
       "batchId",
-      "batchName domain stack startDate endDate schedule mentorId",
+      "batchName startDate endDate mentorId mentorDay stipend status",
+    )
+    .populate(
+      "internshipId",
+      "title domain techStack durationWeeks fee schedule",
     );
+
   if (!intern) {
     res.status(404);
     throw new Error("Intern not found");
@@ -180,7 +190,7 @@ const approveIntern = asyncHandler(async (req, res) => {
     .populate("userId", "name email")
     .populate({
       path: "batchId",
-      populate: { path: "internshipId", select: "title" },
+      populate: { path: "internshipId" },
     });
 
   if (!intern) {
@@ -196,8 +206,6 @@ const approveIntern = asyncHandler(async (req, res) => {
     const outputDir = path.join(__dirname, "../../uploads/pdfs/offer_letters");
     const offerLetterPath = await generateOfferLetterPdf({
       intern,
-      user: intern.userId,
-      batch: intern.batchId,
       outputDir,
     });
 
@@ -209,8 +217,8 @@ const approveIntern = asyncHandler(async (req, res) => {
       name: intern.userId.name,
       email: intern.userId.email,
       offerLetterPath,
-      batchName: intern.batchId.internshipId?.title || intern.batchId.batchName,
-      domain: intern.batchId.domain,
+      batchName: intern.batchId.batchName,
+      domain: intern.internshipId.domain,
     });
   } catch (error) {
     console.error("Error in approval pipeline:", error);
@@ -303,6 +311,7 @@ const onboardBatch = asyncHandler(async (req, res) => {
         intern: fullIntern,
         user: fullIntern.userId,
         batch: fullIntern.batchId,
+        internship: fullIntern.internshipId,
         outputDir,
       });
 
@@ -313,10 +322,8 @@ const onboardBatch = asyncHandler(async (req, res) => {
         name: fullIntern.userId.name,
         email: fullIntern.userId.email,
         offerLetterPath,
-        batchName:
-          fullIntern.batchId.internshipId?.title ||
-          fullIntern.batchId.batchName,
-        domain: fullIntern.batchId.domain,
+        batchName: fullIntern.batchId.batchName,
+        domain: fullIntern.internshipId.domain,
       });
 
       await fullIntern.save();

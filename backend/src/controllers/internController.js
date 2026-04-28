@@ -27,6 +27,7 @@ const getBatches = asyncHandler(async (req, res) => {
 
   const batches = await InternBatch.find(filter)
     .populate("mentorId", "name email")
+    .populate("internshipId", "title domain")
     .sort({ startDate: -1 });
 
   // Attach intern count to each batch

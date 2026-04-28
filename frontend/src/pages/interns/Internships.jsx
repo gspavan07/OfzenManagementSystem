@@ -13,7 +13,13 @@ import { useApi } from "../../hooks/useApi";
 import { internshipsApi } from "../../api";
 import toast from "react-hot-toast";
 
-const DOMAIN_OPTIONS = ['Full Stack', 'Frontend', 'UI/UX', 'AI + Full Stack'];
+const DOMAIN_OPTIONS = [
+  "Full Stack",
+  "Frontend",
+  "UI/UX",
+  "AI + Full Stack",
+  "Python",
+];
 
 const Internships = () => {
   const {
@@ -70,10 +76,15 @@ const Internships = () => {
   };
 
   const addTechTag = (raw) => {
-    const tags = raw.split(",").map((t) => t.trim()).filter(Boolean);
+    const tags = raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
     setTechStack((prev) => {
       const merged = [...prev];
-      tags.forEach((t) => { if (!merged.includes(t)) merged.push(t); });
+      tags.forEach((t) => {
+        if (!merged.includes(t)) merged.push(t);
+      });
       return merged;
     });
     setTechInput("");
@@ -88,13 +99,24 @@ const Internships = () => {
     }
   };
 
-  const removeTechTag = (tag) => setTechStack((prev) => prev.filter((t) => t !== tag));
+  const removeTechTag = (tag) =>
+    setTechStack((prev) => prev.filter((t) => t !== tag));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const payload = { title, domain, description, openings, fee, status, durationWeeks: Number(durationWeeks), certificate, techStack };
+      const payload = {
+        title,
+        domain,
+        description,
+        openings,
+        fee,
+        status,
+        durationWeeks: Number(durationWeeks),
+        certificate,
+        techStack,
+      };
       if (editingId) {
         await internshipsApi.update(editingId, payload);
         toast.success("Internship role updated");
@@ -112,7 +134,12 @@ const Internships = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure? This will not delete batches or interns associated with this role.")) return;
+    if (
+      !confirm(
+        "Are you sure? This will not delete batches or interns associated with this role.",
+      )
+    )
+      return;
     try {
       await internshipsApi.delete(id);
       toast.success("Internship role deleted");
@@ -128,15 +155,23 @@ const Internships = () => {
       label: "Internship Role",
       render: (val, row) => (
         <div>
-          <div className="font-bold text-[var(--color-text-primary)]">{val}</div>
-          <div className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">{row.domain}</div>
+          <div className="font-bold text-[var(--color-text-primary)]">
+            {val}
+          </div>
+          <div className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
+            {row.domain}
+          </div>
         </div>
       ),
     },
     {
       key: "durationWeeks",
       label: "Duration",
-      render: (val) => <span className="text-[var(--color-text-secondary)]">{val ? `${val} wks` : "—"}</span>,
+      render: (val) => (
+        <span className="text-[var(--color-text-secondary)]">
+          {val ? `${val} wks` : "—"}
+        </span>
+      ),
     },
     {
       key: "techStack",
@@ -144,7 +179,9 @@ const Internships = () => {
       render: (val) => (
         <div className="flex flex-wrap gap-1">
           {(val || []).map((t) => (
-            <Badge key={t} variant="secondary">{t}</Badge>
+            <Badge key={t} variant="secondary">
+              {t}
+            </Badge>
           ))}
         </div>
       ),
@@ -152,17 +189,25 @@ const Internships = () => {
     {
       key: "certificate",
       label: "Certificate",
-      render: (val) => <span className="text-xs text-[var(--color-text-muted)]">{val || "—"}</span>,
+      render: (val) => (
+        <span className="text-xs text-[var(--color-text-muted)]">
+          {val || "—"}
+        </span>
+      ),
     },
     {
       key: "fee",
       label: "Fee",
-      render: (val) => <span className="font-semibold text-green-500">₹{val.toLocaleString()}</span>,
+      render: (val) => (
+        <span className="font-semibold text-green-500">
+          ₹{val.toLocaleString()}
+        </span>
+      ),
     },
     {
       key: "openings",
       label: "Openings",
-      render: (val) => <Badge variant="secondary">{val || 'No Limit'}</Badge>,
+      render: (val) => <Badge variant="secondary">{val || "No Limit"}</Badge>,
     },
     {
       key: "status",
@@ -219,7 +264,9 @@ const Internships = () => {
       <Modal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editingId ? "Edit Internship Role" : "Create New Internship Role"}
+        title={
+          editingId ? "Edit Internship Role" : "Create New Internship Role"
+        }
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -287,7 +334,9 @@ const Internships = () => {
                 onChange={(e) => setStatus(e.target.value)}
                 required
               >
-                <option value="active">Active (Visible for registration)</option>
+                <option value="active">
+                  Active (Visible for registration)
+                </option>
                 <option value="closed">Closed</option>
               </select>
             </div>
@@ -295,7 +344,8 @@ const Internships = () => {
             {/* Tech Stack Tag Input */}
             <div className="md:col-span-2 space-y-1">
               <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
-                Tech Stack <span className="text-[var(--color-primary)] ml-0.5">*</span>
+                Tech Stack{" "}
+                <span className="text-[var(--color-primary)] ml-0.5">*</span>
               </label>
               <div
                 className="w-full min-h-[42px] flex flex-wrap gap-1.5 items-center bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 cursor-text"
@@ -309,7 +359,10 @@ const Internships = () => {
                     {tag}
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); removeTechTag(tag); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTechTag(tag);
+                      }}
                       className="hover:text-red-400 transition-colors leading-none"
                     >
                       ×
@@ -322,12 +375,18 @@ const Internships = () => {
                   value={techInput}
                   onChange={(e) => setTechInput(e.target.value)}
                   onKeyDown={handleTechKeyDown}
-                  onBlur={() => { if (techInput.trim()) addTechTag(techInput); }}
-                  placeholder={techStack.length === 0 ? "Type & press Enter or comma…" : ""}
+                  onBlur={() => {
+                    if (techInput.trim()) addTechTag(techInput);
+                  }}
+                  placeholder={
+                    techStack.length === 0 ? "Type & press Enter or comma…" : ""
+                  }
                   className="flex-1 min-w-[120px] bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
                 />
               </div>
-              <p className="text-xs text-[var(--color-text-muted)]">Press Enter or comma to add each technology.</p>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Press Enter or comma to add each technology.
+              </p>
             </div>
 
             <div className="md:col-span-2">

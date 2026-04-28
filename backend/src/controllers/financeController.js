@@ -206,28 +206,44 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   const fyStartYear = Number(req.query.year) || new Date().getFullYear();
   
   // Indian FY: April [fyStartYear] to March [fyStartYear + 1]
-  const revenueData = await Revenue.find({
-    date: {
-      $gte: new Date(fyStartYear, 3, 1), // April 1st
-      $lte: new Date(fyStartYear + 1, 2, 31, 23, 59, 59) // March 31st
-    }
-  });
+  const fyRange = {
+    $gte: new Date(fyStartYear, 3, 1), // April 1st
+    $lte: new Date(fyStartYear + 1, 2, 31, 23, 59, 59) // March 31st
+  };
 
-  const expenseData = await Expense.find({
-    date: {
-      $gte: new Date(fyStartYear, 3, 1), // April 1st
-      $lte: new Date(fyStartYear + 1, 2, 31, 23, 59, 59) // March 31st
-    }
-  });
+  const revenueData = await Revenue.find({ date: fyRange });
+  const expenseData = await Expense.find({ date: fyRange });
 
-  const totalTurnover = revenueData.reduce((sum, r) => sum + r.totalCollected, 0);
+  // ─── Intern Revenue Calculation ─────────────────────────────────────────────
+  const Intern = require('../models/Intern');
+  const InternBatch = require('../models/InternBatch');
+  
+  // 1. Get batches for fee info
+  const batches = await InternBatch.find().populate('internshipId', 'fee').lean();
+  const batchFeeMap = batches.reduce((acc, b) => { 
+    acc[b._id.toString()] = b.internshipId?.fee || 0; 
+    return acc; 
+  }, {});
+
+  // 2. Find paid interns within the FY
+  const paidInterns = await Intern.find({
+    paymentStatus: 'paid',
+    createdAt: fyRange
+  }).lean();
+
+  const totalInternRevenue = paidInterns.reduce((sum, intern) => {
+    return sum + (batchFeeMap[intern.batchId?.toString()] || 0);
+  }, 0);
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const totalDirectRevenue = revenueData.reduce((sum, r) => sum + r.totalCollected, 0);
+  const totalTurnover = totalDirectRevenue + totalInternRevenue;
   const totalExpenses = expenseData.reduce((sum, e) => sum + e.amount, 0);
   const totalProfit = totalTurnover - totalExpenses;
   const totalGst = revenueData.reduce((sum, r) => sum + (r.gstAmount || 0), 0);
 
   // Aggregated Counts
   const Employee = require('../models/Employee');
-  const Intern = require('../models/Intern');
   const totalEmployees = await Employee.countDocuments({ isActive: true });
   const activeInterns = await Intern.countDocuments({ registrationStatus: 'approved' });
 
@@ -237,17 +253,25 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     const month = ((i + 3) % 12) + 1; // 4, 5, ..., 12, 1, 2, 3
     const year = month >= 4 ? fyStartYear : fyStartYear + 1;
     
-    const rev = revenueData.filter(r => {
+    // Direct Revenue
+    const directRev = revenueData.filter(r => {
       const d = new Date(r.date);
       return d.getMonth() + 1 === month && d.getFullYear() === year;
     }).reduce((sum, r) => sum + r.totalCollected, 0);
+
+    // Intern Revenue for this month
+    const internRev = paidInterns.filter(intern => {
+      const d = new Date(intern.createdAt);
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    }).reduce((sum, intern) => sum + (batchFeeMap[intern.batchId?.toString()] || 0), 0);
+
+    const rev = directRev + internRev;
     
     const gst = revenueData.filter(r => {
       const d = new Date(r.date);
       return d.getMonth() + 1 === month && d.getFullYear() === year;
     }).reduce((sum, r) => sum + (r.gstAmount || 0), 0);
     
-    // Filter expenses for this specific month/year
     const exp = expenseData.filter(e => {
       const d = new Date(e.date);
       return d.getMonth() + 1 === month && d.getFullYear() === year;
@@ -259,7 +283,9 @@ const getDashboardStats = asyncHandler(async (req, res) => {
       revenue: rev,
       expenses: exp,
       profit: rev - exp,
-      gst: gst
+      gst: gst,
+      internRevenue: internRev,
+      directRevenue: directRev
     });
   }
 
@@ -267,6 +293,8 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     success: true,
     stats: {
       totalTurnover,
+      totalInternRevenue,
+      totalDirectRevenue,
       totalExpenses,
       totalProfit,
       totalGst,
@@ -276,6 +304,7 @@ const getDashboardStats = asyncHandler(async (req, res) => {
     }
   });
 });
+
 
 // GET /api/finance/intern-revenue
 const getInternRevenue = asyncHandler(async (req, res) => {

@@ -56,6 +56,8 @@ const Dashboard = () => {
 
   const stats = statsData?.stats || {
     totalTurnover: 0,
+    totalInternRevenue: 0,
+    totalDirectRevenue: 0,
     totalExpenses: 0,
     totalProfit: 0,
     totalGst: 0,
@@ -102,40 +104,33 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard
             label="Total Turnover"
-            value={`₹${(stats.totalTurnover / 100000).toFixed(2)}L`}
+            value={`₹${Math.round(stats.totalTurnover).toLocaleString()}`}
             icon={TrendingUp}
             color="indigo"
             loading={statsLoading}
+            subtitle={`Target: FY ${fyYear}-${String(fyYear + 1).slice(2)}`}
+          />
+          <StatCard
+            label="Intern Revenue"
+            value={`₹${Math.round(stats.totalInternRevenue).toLocaleString()}`}
+            icon={BookOpen}
+            color="green"
+            loading={statsLoading}
+            subtitle={`Direct: ₹${Math.round(stats.totalDirectRevenue).toLocaleString()}`}
           />
           <StatCard
             label="Total Expenses"
-            value={`₹${(stats.totalExpenses / 100000).toFixed(2)}L`}
+            value={`₹${Math.round(stats.totalExpenses).toLocaleString()}`}
             icon={ArrowDownCircle}
             color="red"
             loading={statsLoading}
           />
           <StatCard
             label="Net Profit"
-            value={`₹${(stats.totalProfit / 100000).toFixed(2)}L`}
+            value={`₹${Math.round(stats.totalProfit).toLocaleString()}`}
             icon={ArrowUpCircle}
             color="green"
             loading={statsLoading}
-          />
-          <StatCard
-            label="GST Paid"
-            value={
-              stats.totalTurnover >= 2000000
-                ? `₹${(stats.totalGst / 1000).toFixed(1)}k`
-                : "Not Applicable"
-            }
-            icon={IndianRupee}
-            color={stats.totalTurnover >= 2000000 ? "orange" : "gray"}
-            loading={statsLoading}
-            subtitle={
-              stats.totalTurnover < 2000000
-                ? "Turnover < ₹20L"
-                : `Paid: ₹${stats.totalGst.toLocaleString()}`
-            }
           />
         </div>
       )}
@@ -163,14 +158,34 @@ const Dashboard = () => {
           color="orange"
           loading={annLoading}
         />
-        <StatCard
-          label="Available Funds"
-          value={`₹${((stats.totalProfit || 0) / 1000).toFixed(1)}k`}
-          icon={Wallet}
-          color="indigo"
-          loading={statsLoading}
-        />
+        {isAdmin ? (
+          <StatCard
+            label="GST Paid"
+            value={
+              stats.totalTurnover >= 2000000
+                ? `₹${Math.round(stats.totalGst).toLocaleString()}`
+                : "Not Applicable"
+            }
+            icon={IndianRupee}
+            color={stats.totalTurnover >= 2000000 ? "orange" : "gray"}
+            loading={statsLoading}
+            subtitle={
+              stats.totalTurnover < 2000000
+                ? "Turnover < ₹20L"
+                : `Actual: ₹${stats.totalGst.toLocaleString()}`
+            }
+          />
+        ) : (
+          <StatCard
+            label="Available Funds"
+            value={`₹${Math.round(stats.totalProfit || 0).toLocaleString()}`}
+            icon={Wallet}
+            color="indigo"
+            loading={statsLoading}
+          />
+        )}
       </div>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -224,11 +239,19 @@ const Dashboard = () => {
                           <div className="space-y-1">
                             <div className="flex justify-between gap-4">
                               <span className="text-text-secondary">
-                                Revenue:
+                                Total Revenue:
                               </span>
                               <span className="font-semibold text-primary">
                                 ₹{m.revenue.toLocaleString()}
                               </span>
+                            </div>
+                            <div className="flex justify-between gap-4 pl-2 text-[9px] text-text-muted">
+                              <span>• Direct Rev:</span>
+                              <span>₹{m.directRevenue?.toLocaleString() || 0}</span>
+                            </div>
+                            <div className="flex justify-between gap-4 pl-2 text-[9px] text-text-muted">
+                              <span>• Intern Rev:</span>
+                              <span>₹{m.internRevenue?.toLocaleString() || 0}</span>
                             </div>
                             <div className="flex justify-between gap-4">
                               <span className="text-[var(--color-text-secondary)]">
@@ -248,6 +271,7 @@ const Dashboard = () => {
                                 ₹{m.profit.toLocaleString()}
                               </span>
                             </div>
+
                             {m.gst > 0 && (
                               <div className="flex justify-between gap-4 text-[9px] text-orange-500 italic">
                                 <span>GST:</span>

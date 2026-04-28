@@ -22,6 +22,7 @@ import InternDashboard from "./pages/interns/InternDashboard";
 import AccountSettings from "./pages/settings/AccountSettings";
 import InternRevenue from "./pages/interns/InternRevenue";
 import DocumentTemplates from "./pages/settings/DocumentTemplates";
+import MentorBatchDetails from "./pages/mentor/MentorBatchDetails";
 
 // Placeholder Pages (will be implemented next)
 const Placeholder = ({ title }) => (
@@ -123,6 +124,7 @@ function App() {
               }
             >
               <Route path="/mentor/batches" element={<MentorBatches />} />
+              <Route path="/mentor/batches/:id" element={<MentorBatchDetails />} />
             </Route>
 
             {/* Announcements */}

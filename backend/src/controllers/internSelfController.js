@@ -112,7 +112,17 @@ const completeMilestone = asyncHandler(async (req, res) => {
 // GET /api/certificates/:internId
 const getCertificate = asyncHandler(async (req, res) => {
   const cert = await Certificate.findOne({ internId: req.params.internId });
-  res.json({ success: true, certificate: cert || null });
+  
+  if (!cert) return res.json({ success: true, certificate: null });
+
+  // Sanitize path
+  const obj = cert.toObject();
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
+  if (obj.pdfUrl && typeof obj.pdfUrl === 'string' && !obj.pdfUrl.startsWith('http')) {
+    obj.pdfUrl = `${baseUrl}${obj.pdfUrl.startsWith('/') ? '' : '/'}${obj.pdfUrl}`;
+  }
+
+  res.json({ success: true, certificate: obj });
 });
 
 // POST /api/certificates/generate
@@ -141,7 +151,7 @@ const generateCertificate = asyncHandler(async (req, res) => {
 
   // Generate PDF
   try {
-    const pdfPath = await generateCertificatePdf({
+    const { fullUrl } = await generateCertificatePdf({
       intern,
       user: intern.userId,
       batch: intern.batchId,
@@ -149,7 +159,7 @@ const generateCertificate = asyncHandler(async (req, res) => {
       certificate,
       outputDir: PDF_DIR,
     });
-    certificate.pdfUrl = pdfPath.replace(path.join(__dirname, '../..'), '');
+    certificate.pdfUrl = fullUrl;
     await certificate.save();
   } catch (pdfErr) {
     console.error('Certificate PDF generation failed:', pdfErr.message);
@@ -185,9 +195,35 @@ const verifyCertificate = asyncHandler(async (req, res) => {
   });
 });
 
+// POST /api/interns/projects/assign
+const assignProject = asyncHandler(async (req, res) => {
+  const { internId, batchId, projectTitle, brief, milestones } = req.body;
+
+  if (!internId || !batchId || !projectTitle) {
+    res.status(400);
+    throw new Error('internId, batchId, and projectTitle are required');
+  }
+
+  // Create or Update the project for this intern
+  const project = await Project.findOneAndUpdate(
+    { internId },
+    {
+      internId,
+      batchId,
+      projectTitle,
+      brief,
+      milestones: milestones || [],
+    },
+    { upsert: true, new: true }
+  );
+
+  res.status(201).json({ success: true, project });
+});
+
 module.exports = {
   getSubmissions, createSubmission, giveFeedback,
   getAttendance, markAttendance,
   getProject, completeMilestone,
   getCertificate, generateCertificate, verifyCertificate,
+  assignProject,
 };

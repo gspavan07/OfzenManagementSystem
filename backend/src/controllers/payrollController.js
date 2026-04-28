@@ -18,7 +18,17 @@ const getPayroll = asyncHandler(async (req, res) => {
     .populate({ path: 'employeeId', populate: { path: 'userId', select: 'name email' } })
     .sort({ year: -1, month: -1 });
 
-  res.json({ success: true, payslips });
+  // Sanitize paths
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
+  const sanitizedPayslips = payslips.map(p => {
+    const obj = p.toObject();
+    if (obj.pdfUrl && typeof obj.pdfUrl === 'string' && !obj.pdfUrl.startsWith('http')) {
+      obj.pdfUrl = `${baseUrl}${obj.pdfUrl.startsWith('/') ? '' : '/'}${obj.pdfUrl}`;
+    }
+    return obj;
+  });
+
+  res.json({ success: true, payslips: sanitizedPayslips });
 });
 
 // GET /api/payroll/:id
@@ -27,7 +37,15 @@ const getPayslipById = asyncHandler(async (req, res) => {
     .populate({ path: 'employeeId', populate: { path: 'userId', select: 'name email phone' } });
 
   if (!payslip) { res.status(404); throw new Error('Payslip not found'); }
-  res.json({ success: true, payslip });
+  
+  // Sanitize path
+  const obj = payslip.toObject();
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
+  if (obj.pdfUrl && typeof obj.pdfUrl === 'string' && !obj.pdfUrl.startsWith('http')) {
+    obj.pdfUrl = `${baseUrl}${obj.pdfUrl.startsWith('/') ? '' : '/'}${obj.pdfUrl}`;
+  }
+
+  res.json({ success: true, payslip: obj });
 });
 
 // POST /api/payroll/generate
@@ -64,12 +82,12 @@ const generatePayslip = asyncHandler(async (req, res) => {
 
   // Generate PDF
   try {
-    const pdfPath = await generatePayslipPdf({
+    const { fullUrl } = await generatePayslipPdf({
       employee,
       payslip: payslip.toObject(),
       outputDir: PDF_DIR,
     });
-    payslip.pdfUrl = pdfPath.replace(path.join(__dirname, '../..'), '');
+    payslip.pdfUrl = fullUrl;
     await payslip.save();
   } catch (pdfErr) {
     console.error('PDF generation failed (non-blocking):', pdfErr.message);
@@ -133,16 +151,18 @@ const downloadPayslipPdf = asyncHandler(async (req, res) => {
 
   if (!payslip.pdfUrl) {
     // Re-generate PDF on demand
-    const pdfPath = await generatePayslipPdf({
+    const { fullUrl } = await generatePayslipPdf({
       employee,
       payslip: payslip.toObject(),
       outputDir: PDF_DIR,
     });
-    payslip.pdfUrl = pdfPath.replace(path.join(__dirname, '../..'), '');
+    payslip.pdfUrl = fullUrl;
     await payslip.save();
   }
 
-  const absolutePath = path.join(__dirname, '../..', payslip.pdfUrl);
+  // extract filename from URL or path
+  const filename = payslip.pdfUrl.split('/').pop();
+  const absolutePath = path.join(PDF_DIR, filename);
   res.download(absolutePath);
 });
 
@@ -157,7 +177,17 @@ const getMyPayslips = asyncHandler(async (req, res) => {
     .select('month year netPay status pdfUrl generatedAt')
     .sort({ year: -1, month: -1 });
 
-  res.json({ success: true, payslips });
+  // Sanitize paths
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
+  const sanitizedPayslips = payslips.map(p => {
+    const obj = p.toObject();
+    if (obj.pdfUrl && typeof obj.pdfUrl === 'string' && !obj.pdfUrl.startsWith('http')) {
+      obj.pdfUrl = `${baseUrl}${obj.pdfUrl.startsWith('/') ? '' : '/'}${obj.pdfUrl}`;
+    }
+    return obj;
+  });
+
+  res.json({ success: true, payslips: sanitizedPayslips });
 });
 
 module.exports = { getPayroll, getPayslipById, generatePayslip, markPaid, downloadPayslipPdf, getMyPayslips };

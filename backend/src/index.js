@@ -20,6 +20,7 @@ const announcementRoutes = require("./routes/announcements");
 const mailRoutes = require("./routes/mail");
 const publicInternshipRoutes = require("./routes/public/internships");
 const internshipRoutes = require("./routes/internships");
+const internshipProjectRoutes = require("./routes/internshipProjects");
 const templateRoutes = require("./routes/templates");
 
 // ─── App Init ──────────────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/mail", mailRoutes);
 app.use("/api/public/internships", publicInternshipRoutes);
 app.use("/api/internships", internshipRoutes);
+app.use("/api/internship-projects", internshipProjectRoutes);
 app.use("/api/templates", templateRoutes);
 
 // ─── Health Check ──────────────────────────────────────────────────────────────

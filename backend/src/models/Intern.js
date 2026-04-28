@@ -41,6 +41,7 @@ const internSchema = new mongoose.Schema(
     },
     isAtRisk: { type: Boolean, default: false },
     atRiskNote: { type: String, trim: true },
+    completedWeeks: { type: [Number], default: [] }, // Tracking progress by week numbers
   },
   { timestamps: true },
 );

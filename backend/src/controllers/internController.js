@@ -55,12 +55,20 @@ const getBatchById = asyncHandler(async (req, res) => {
     throw new Error("Batch not found");
   }
 
-  const interns = await Intern.find({ batchId: batch._id }).populate(
-    "userId",
-    "name email phone",
+  const interns = await Intern.find({ batchId: batch._id })
+    .populate("userId", "name email phone")
+    .populate("internshipId", "title");
+
+  // Attach project assignment status
+  const Project = require("../models/Project");
+  const internsWithProjectStatus = await Promise.all(
+    interns.map(async (i) => {
+      const project = await Project.findOne({ internId: i._id });
+      return { ...i.toObject(), projectAssigned: !!project };
+    }),
   );
 
-  res.json({ success: true, batch, interns });
+  res.json({ success: true, batch, interns: internsWithProjectStatus });
 });
 
 // POST /api/intern-batches
@@ -162,7 +170,25 @@ const getInternById = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("Intern not found");
   }
-  res.json({ success: true, intern });
+
+  // Fetch assigned project
+  const Project = require("../models/Project");
+  const project = await Project.findOne({ internId: intern._id });
+
+  // Clean up paths to ensure they are full URLs
+  const internObj = intern.toObject();
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
+  if (internObj.offerLetterUrl && typeof internObj.offerLetterUrl === 'string') {
+    if (internObj.offerLetterUrl.startsWith('/uploads/')) {
+       internObj.offerLetterUrl = `${baseUrl}${internObj.offerLetterUrl}`;
+    } else if (!internObj.offerLetterUrl.startsWith('http')) {
+       // Handle case where it might just be the filename or an old absolute path
+       const filename = internObj.offerLetterUrl.split('/').pop();
+       internObj.offerLetterUrl = `${baseUrl}/uploads/pdfs/offer_letters/${filename}`;
+    }
+  }
+
+  res.json({ success: true, intern: { ...internObj, project } });
 });
 
 // POST /api/interns
@@ -205,19 +231,19 @@ const approveIntern = asyncHandler(async (req, res) => {
   // 2. Generate Offer Letter
   try {
     const outputDir = path.join(__dirname, "../../uploads/pdfs/offer_letters");
-    const offerLetterPath = await generateOfferLetterPdf({
+    const { absolutePath, fullUrl } = await generateOfferLetterPdf({
       intern,
       outputDir,
     });
 
-    intern.offerLetterUrl = offerLetterPath;
+    intern.offerLetterUrl = fullUrl;
     intern.offerLetterSent = true;
 
     // 3. Send Approval Emails
     await sendApprovalEmails({
       name: intern.userId.name,
       email: intern.userId.email,
-      offerLetterPath,
+      offerLetterPath: absolutePath,
       batchName: intern.batchId.batchName,
       domain: intern.internshipId.domain,
     });
@@ -246,17 +272,21 @@ const rejectIntern = asyncHandler(async (req, res) => {
 const getInternMe = asyncHandler(async (req, res) => {
   const intern = await Intern.findOne({ userId: req.user.id })
     .populate("userId", "name email phone")
+    .populate("internshipId")
     .populate({
       path: "batchId",
-      populate: { path: "internshipId", select: "title" },
+      populate: { path: "mentorId", select: "name email" },
     });
 
   if (!intern) {
-    // We return success:true but intern:null if no record exists yet
     return res.json({ success: true, intern: null });
   }
 
-  res.json({ success: true, intern });
+  // Fetch assigned project
+  const Project = require("../models/Project");
+  const project = await Project.findOne({ internId: intern._id });
+
+  res.json({ success: true, intern: { ...intern.toObject(), project } });
 });
 
 // PUT /api/intern-batches/:id/onboard
@@ -308,7 +338,7 @@ const onboardBatch = asyncHandler(async (req, res) => {
         __dirname,
         "../../uploads/pdfs/offer_letters",
       );
-      const offerLetterPath = await generateOfferLetterPdf({
+      const { absolutePath, fullUrl } = await generateOfferLetterPdf({
         intern: fullIntern,
         user: fullIntern.userId,
         batch: fullIntern.batchId,
@@ -316,13 +346,13 @@ const onboardBatch = asyncHandler(async (req, res) => {
         outputDir,
       });
 
-      fullIntern.offerLetterUrl = offerLetterPath;
+      fullIntern.offerLetterUrl = fullUrl;
       fullIntern.offerLetterSent = true;
 
       await sendApprovalEmails({
         name: fullIntern.userId.name,
         email: fullIntern.userId.email,
-        offerLetterPath,
+        offerLetterPath: absolutePath,
         role: fullIntern.batchId.internshipId.title,
         domain: fullIntern.batchId.internshipId.domain,
       });
@@ -339,6 +369,62 @@ const onboardBatch = asyncHandler(async (req, res) => {
   res.json({ success: true, results, batch });
 });
 
+// PUT /api/interns/:id/mark-week
+const markWeekCompleted = asyncHandler(async (req, res) => {
+  const { weekNumber, completed } = req.body;
+  const intern = await Intern.findById(req.params.id);
+
+  if (!intern) {
+    res.status(404);
+    throw new Error("Intern not found");
+  }
+
+  if (completed) {
+    if (!intern.completedWeeks.includes(weekNumber)) {
+      intern.completedWeeks.push(weekNumber);
+    }
+  } else {
+    intern.completedWeeks = intern.completedWeeks.filter(
+      (w) => w !== weekNumber,
+    );
+  }
+
+  await intern.save();
+  res.json({ success: true, completedWeeks: intern.completedWeeks });
+});
+
+// PUT /api/intern-batches/:id/bulk-mark-week
+const bulkMarkWeekCompleted = asyncHandler(async (req, res) => {
+  const { weekNumber, completed } = req.body;
+  const interns = await Intern.find({
+    batchId: req.params.id,
+    registrationStatus: "approved",
+  });
+
+  await Promise.all(
+    interns.map(async (intern) => {
+      if (completed) {
+        if (!intern.completedWeeks.includes(weekNumber)) {
+          intern.completedWeeks.push(weekNumber);
+          await intern.save();
+        }
+      } else {
+        if (intern.completedWeeks.includes(weekNumber)) {
+          intern.completedWeeks = intern.completedWeeks.filter(
+            (w) => w !== weekNumber,
+          );
+          await intern.save();
+        }
+      }
+    }),
+  );
+
+  res.json({
+    success: true,
+    message: `Week ${weekNumber} updated for ${interns.length} interns.`,
+  });
+});
+
 module.exports = {
   getBatches,
   getBatchById,
@@ -351,4 +437,6 @@ module.exports = {
   rejectIntern,
   getInternMe,
   onboardBatch,
+  markWeekCompleted,
+  bulkMarkWeekCompleted,
 };

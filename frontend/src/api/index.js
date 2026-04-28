@@ -1,5 +1,7 @@
 import api from './axios';
 
+export const FILE_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace('/api', '');
+
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
@@ -72,6 +74,13 @@ export const internshipsApi = {
   delete: (id) => api.delete(`/internships/${id}`),
 };
 
+export const internshipProjectsApi = {
+  getByInternship: (internshipId) => api.get('/internship-projects', { params: { internshipId } }),
+  create: (data) => api.post('/internship-projects', data),
+  update: (id, data) => api.put(`/internship-projects/${id}`, data),
+  delete: (id) => api.delete(`/internship-projects/${id}`),
+};
+
 // ─── Intern Batches ────────────────────────────────────────────────────────────
 export const batchesApi = {
   getAll: (params) => api.get('/intern-batches', { params }),
@@ -79,6 +88,7 @@ export const batchesApi = {
   create: (data) => api.post('/intern-batches', data),
   update: (id, data) => api.put(`/intern-batches/${id}`, data),
   onboard: (id, data) => api.put(`/intern-batches/${id}/onboard`, data),
+  bulkMarkWeek: (id, data) => api.put(`/intern-batches/${id}/bulk-mark-week`, data),
 };
 
 // ─── Interns ───────────────────────────────────────────────────────────────────
@@ -95,10 +105,12 @@ export const internsApi = {
   getAttendance: (batchId, sessionDate) => api.get(`/interns/attendance/${batchId}/${sessionDate}`),
   markAttendance: (data) => api.post('/interns/attendance/mark', data),
   getProject: (internId) => api.get(`/interns/projects/${internId}`),
+  assignProject: (data) => api.post('/interns/projects/assign', data),
   completeMilestone: (internId, week) => api.put(`/interns/projects/${internId}/milestone/${week}`),
   getCertificate: (internId) => api.get(`/interns/certificates/${internId}`),
   generateCertificate: (data) => api.post('/interns/certificates/generate', data),
   verifyCertificate: (certId) => api.get(`/interns/certificates/verify/${certId}`),
+  markWeekCompleted: (id, data) => api.put(`/interns/${id}/mark-week`, data),
 };
 
 // ─── Announcements ─────────────────────────────────────────────────────────────

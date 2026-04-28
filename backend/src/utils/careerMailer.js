@@ -5,7 +5,7 @@ const nodemailer = require("nodemailer");
  * Uses credentials from .env
  */
 const sendRegistrationSuccessEmail = async (studentData) => {
-  const { name, email, refNumber, batchName, paymentId, domain } = studentData;
+  const { name, email, refNumber, role, paymentId } = studentData;
 
   // 1. Create transporter
   const transporter = nodemailer.createTransport({
@@ -32,7 +32,7 @@ const sendRegistrationSuccessEmail = async (studentData) => {
         <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">Dear <strong>${name}</strong>,</p>
         
         <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-          Congratulations! We have successfully received your internship registration for the <strong>${batchName}</strong> (${domain}).
+          Congratulations! We have successfully received your internship registration for the <strong>${role}</strong>.
         </p>
 
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
@@ -87,7 +87,7 @@ const sendRegistrationSuccessEmail = async (studentData) => {
  * Send approval emails (Offer Letter and Login Details)
  */
 const sendApprovalEmails = async (data) => {
-  const { name, email, offerLetterPath, batchName, domain } = data;
+  const { name, email, offerLetterPath, role, domain } = data;
 
   const transporter = nodemailer.createTransport({
     host: process.env.CAREERS_MAIL_HOST || "smtp.zoho.in",
@@ -104,30 +104,6 @@ const sendApprovalEmails = async (data) => {
     from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
     subject: `Internship Onboarding Confirmation – Welcome to Ofzen!`,
-    html: `
-      <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
-        <h2>Congratulations ${name}!</h2>
-        <p>We are pleased to inform you that your internship application for <strong>${batchName}</strong> (${domain}) has been <strong>approved</strong>.</p>
-        <p>Please find your official <strong>Internship Offer Letter</strong> attached to this email.</p>
-        <p>We are excited to have you on board!</p>
-        <br>
-        <p>Best Regards,<br>Team Ofzen</p>
-      </div>
-    `,
-    attachments: [
-      {
-        filename: `Offer_Letter_${name.replace(/\s+/g, "_")}.pdf`,
-        path: offerLetterPath,
-      },
-    ],
-  });
-
-  // 2. Send Login Details Email
-  const loginUrl = process.env.FRONTEND_URL || "https://work.ofzen.in";
-  await transporter.sendMail({
-    from: `"Ofzen Support" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
-    to: email,
-    subject: `Welcome to Ofzen — Student Portal Access`,
     html: `
       <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif;">
 
@@ -154,7 +130,7 @@ const sendApprovalEmails = async (data) => {
 
               <p>
                 We are delighted to inform you that your application for the 
-                <strong>${batchName} (${domain}) internship program</strong> has been successfully approved.
+                <strong>${role}</strong> has been successfully approved.
               </p>
 
               <p>
@@ -194,6 +170,37 @@ const sendApprovalEmails = async (data) => {
     </tr>
   </table>
 </body>
+    `,
+    attachments: [
+      {
+        filename: `Offer_Letter_${name.replace(/\s+/g, "_")}.pdf`,
+        path: offerLetterPath,
+      },
+    ],
+  });
+
+  // 2. Send Login Details Email
+  const loginUrl = process.env.FRONTEND_URL || "https://work.ofzen.in";
+  await transporter.sendMail({
+    from: `"Ofzen Support" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
+    to: email,
+    subject: `Welcome to Ofzen — Student Portal Access`,
+    html: `
+      <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+        <h2>Welcome to the Team, ${name}!</h2>
+        <p>Your account has been activated. you can now log into the Ofzen Student Portal to access your curriculum, submit assignments, and track your progress.</p>
+        
+        <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>Portal URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+          <p style="margin: 10px 0 0 0;"><strong>Username:</strong> ${email}</p>
+          <p style="margin: 5px 0 0 0;"><strong>Password:</strong> The password you created during registration</p>
+        </div>
+
+        <p>If you have forgotten your password, you can use the "Forgot Password" link on the login page.</p>
+        <p>We look forward to seeing your work!</p>
+        <br>
+        <p>Best Regards,<br>Ofzen Technologies</p>
+      </div>
     `,
   });
 };

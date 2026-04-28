@@ -323,8 +323,8 @@ const onboardBatch = asyncHandler(async (req, res) => {
         name: fullIntern.userId.name,
         email: fullIntern.userId.email,
         offerLetterPath,
-        batchName: fullIntern.batchId.batchName,
-        domain: fullIntern.internshipId.domain,
+        role: fullIntern.batchId.internshipId.title,
+        domain: fullIntern.batchId.internshipId.domain,
       });
 
       await fullIntern.save();

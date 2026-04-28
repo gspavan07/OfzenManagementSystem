@@ -306,13 +306,13 @@ const generateOfferLetterPdf = async (data) => {
   const outputPath = path.join(outputDir, filename);
 
   await generatePdfFromHtml(html, outputPath);
-  
-  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
-  
+
+  const baseUrl = process.env.API_BASE_URL || "http://localhost:5001";
+
   // Return both absolute path (for email) and full web URL (for database/dashboard)
   return {
     absolutePath: outputPath,
-    fullUrl: `${baseUrl}/uploads/pdfs/offer_letters/${filename}`
+    fullUrl: `${baseUrl}/uploads/pdfs/offer_letters/${filename}`,
   };
 };
 

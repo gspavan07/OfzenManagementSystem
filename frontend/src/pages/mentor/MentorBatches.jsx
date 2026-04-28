@@ -1,21 +1,22 @@
 import { useNavigate } from "react-router-dom";
-import {
-  SectionHeader,
-  Card,
-  Table,
-  Badge,
-  Button,
-} from "../../components/ui";
+import { SectionHeader, Card, Table, Badge, Button } from "../../components/ui";
 import { Users, Calendar } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
+
 import { batchesApi } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const MentorBatches = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const { data: batchesData, loading: batchesLoading } = useApi(
     batchesApi.getAll,
   );
-  const batches = batchesData?.batches || [];
+
+  const batches = (batchesData?.batches || []).filter(
+    (b) => b.mentorId?._id === (user?.id || user?._id),
+  );
 
   const handleViewBatch = (id) => {
     navigate(`/mentor/batches/${id}`);
@@ -40,7 +41,10 @@ const MentorBatches = () => {
       key: "mentorDay",
       label: "Mentor Day",
       render: (val) => (
-        <Badge variant="secondary" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+        <Badge
+          variant="secondary"
+          className="bg-purple-500/10 text-purple-500 border-purple-500/20"
+        >
           {val || "Not Set"}
         </Badge>
       ),
@@ -49,7 +53,15 @@ const MentorBatches = () => {
       key: "status",
       label: "Status",
       render: (val) => (
-        <Badge variant={val === "active" ? "success" : val === "completed" ? "secondary" : "warning"}>
+        <Badge
+          variant={
+            val === "active"
+              ? "success"
+              : val === "completed"
+                ? "secondary"
+                : "warning"
+          }
+        >
           {val}
         </Badge>
       ),
@@ -59,8 +71,13 @@ const MentorBatches = () => {
       label: "Timeline",
       render: (_, row) => (
         <div className="text-sm flex flex-col">
-          <span className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">Duration</span>
-          <span>{new Date(row.startDate).toLocaleDateString()} - {new Date(row.endDate).toLocaleDateString()}</span>
+          <span className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider">
+            Duration
+          </span>
+          <span>
+            {new Date(row.startDate).toLocaleDateString()} -{" "}
+            {new Date(row.endDate).toLocaleDateString()}
+          </span>
         </div>
       ),
     },
@@ -78,7 +95,11 @@ const MentorBatches = () => {
       key: "actions",
       label: "Actions",
       render: (_, row) => (
-        <Button variant="secondary" size="sm" onClick={() => handleViewBatch(row._id)}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => handleViewBatch(row._id)}
+        >
           View Batch Details
         </Button>
       ),

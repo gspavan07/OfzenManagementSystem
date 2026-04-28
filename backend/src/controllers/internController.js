@@ -177,14 +177,17 @@ const getInternById = asyncHandler(async (req, res) => {
 
   // Clean up paths to ensure they are full URLs
   const internObj = intern.toObject();
-  const baseUrl = process.env.API_BASE_URL || 'http://localhost:5001';
-  if (internObj.offerLetterUrl && typeof internObj.offerLetterUrl === 'string') {
-    if (internObj.offerLetterUrl.startsWith('/uploads/')) {
-       internObj.offerLetterUrl = `${baseUrl}${internObj.offerLetterUrl}`;
-    } else if (!internObj.offerLetterUrl.startsWith('http')) {
-       // Handle case where it might just be the filename or an old absolute path
-       const filename = internObj.offerLetterUrl.split('/').pop();
-       internObj.offerLetterUrl = `${baseUrl}/uploads/pdfs/offer_letters/${filename}`;
+  const baseUrl = process.env.API_BASE_URL || "http://localhost:5001";
+  if (
+    internObj.offerLetterUrl &&
+    typeof internObj.offerLetterUrl === "string"
+  ) {
+    if (internObj.offerLetterUrl.startsWith("/uploads/")) {
+      internObj.offerLetterUrl = `${baseUrl}${internObj.offerLetterUrl}`;
+    } else if (!internObj.offerLetterUrl.startsWith("http")) {
+      // Handle case where it might just be the filename or an old absolute path
+      const filename = internObj.offerLetterUrl.split("/").pop();
+      internObj.offerLetterUrl = `${baseUrl}/uploads/pdfs/offer_letters/${filename}`;
     }
   }
 
@@ -328,7 +331,7 @@ const onboardBatch = asyncHandler(async (req, res) => {
         .populate("userId", "name email")
         .populate({
           path: "batchId",
-          populate: { path: "internshipId", select: "title domain" },
+          populate: { path: "internshipId" },
         });
 
       // Update Status

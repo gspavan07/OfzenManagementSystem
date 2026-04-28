@@ -7,6 +7,7 @@ const { generatePdfFromHtml } = require("../../utils/pdfGenerator");
  */
 const generateOfferLetterHtml = (data) => {
   const { intern } = data;
+  console.log(intern);
 
   const logoPath = path.join(__dirname, "logo.png");
   let logoBase64 = "";

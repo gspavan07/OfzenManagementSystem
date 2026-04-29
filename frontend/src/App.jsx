@@ -38,6 +38,11 @@ const RootRedirect = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
 
+  // Priority for Interns as requested
+  if (user.profileLabel === "Intern") {
+    return <Navigate to="/intern/dashboard" replace />;
+  }
+
   if (user.permissions?.revenue?.view)
     return <Navigate to="/dashboard" replace />;
   if (user.permissions?.internSelf?.viewProfile)

@@ -234,27 +234,39 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {/* Dashboard — visible only with permission */}
-        {can("revenue.view") && (
+        {user?.profileLabel === "Intern" ? (
+          // For Interns, only show the Dashboard
           <NavItem
-            to="/dashboard"
-            label="Dashboard"
-            icon={LayoutDashboard}
+            to="/intern/dashboard"
+            label="My Dashboard"
+            icon={GraduationCap}
             collapsed={collapsed}
           />
-        )}
+        ) : (
+          <>
+            {/* Dashboard — visible only with permission */}
+            {can("revenue.view") && (
+              <NavItem
+                to="/dashboard"
+                label="Dashboard"
+                icon={LayoutDashboard}
+                collapsed={collapsed}
+              />
+            )}
 
-        {NAV_ITEMS.slice(1).map((item) =>
-          item.items ? (
-            <NavGroup
-              key={item.label}
-              {...item}
-              collapsed={collapsed}
-              can={can}
-            />
-          ) : !item.permission || can(item.permission) ? (
-            <NavItem key={item.to} {...item} collapsed={collapsed} />
-          ) : null,
+            {NAV_ITEMS.slice(1).map((item) =>
+              item.items ? (
+                <NavGroup
+                  key={item.label}
+                  {...item}
+                  collapsed={collapsed}
+                  can={can}
+                />
+              ) : !item.permission || can(item.permission) ? (
+                <NavItem key={item.to} {...item} collapsed={collapsed} />
+              ) : null,
+            )}
+          </>
         )}
       </nav>
 

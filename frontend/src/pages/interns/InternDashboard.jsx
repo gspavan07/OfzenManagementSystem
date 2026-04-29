@@ -23,7 +23,12 @@ import {
   Zap,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
-import { internsApi, authApi, announcementsApi, FILE_BASE_URL } from "../../api";
+import {
+  internsApi,
+  authApi,
+  announcementsApi,
+  FILE_BASE_URL,
+} from "../../api";
 
 const InternDashboard = () => {
   const { data: authData } = useApi(authApi.getMe);
@@ -147,21 +152,31 @@ const InternDashboard = () => {
               <h4 className="text-sm font-bold text-[var(--color-text-secondary)] uppercase mb-3">
                 Next Milestone
               </h4>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
-                  <Target className="w-5 h-5" />
+              {completedCount < projectStartWeek - 1 ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 border border-purple-500/20">
+                    <Target className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[var(--color-text-primary)]">
+                      Week {completedCount + 1}
+                    </p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {internship?.schedule?.find(
+                        (s) => s.week === completedCount + 1,
+                      )?.topic || "TBD"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-[var(--color-text-primary)]">
-                    Week {completedCount + 1}
-                  </p>
-                  <p className="text-xs text-[var(--color-text-muted)]">
-                    {internship?.schedule?.find(
-                      (s) => s.week === completedCount + 1,
-                    )?.topic || "TBD"}
-                  </p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-bold text-green-500">
+                      Completed All Weeks
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </Card>
           </div>
 
@@ -396,7 +411,11 @@ const InternDashboard = () => {
                 </div>
                 {intern?.offerLetterUrl ? (
                   <a
-                    href={intern.offerLetterUrl.startsWith('http') ? intern.offerLetterUrl : `${FILE_BASE_URL}${intern.offerLetterUrl}`}
+                    href={
+                      intern.offerLetterUrl.startsWith("http")
+                        ? intern.offerLetterUrl
+                        : `${FILE_BASE_URL}${intern.offerLetterUrl}`
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="p-1 hover:text-[var(--color-primary)] transition-transform hover:scale-110"
@@ -412,7 +431,7 @@ const InternDashboard = () => {
                 className={`flex items-center justify-between p-4 border rounded-2xl transition-all ${
                   intern?.completionStatus === "completed"
                     ? "bg-green-500/10 border-green-500/20 group hover:border-green-500/40"
-                    : "bg-white/[0.02] border-[var(--color-border)] opacity-50"
+                    : "bg-white/2 border-border opacity-50"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -420,18 +439,22 @@ const InternDashboard = () => {
                     className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
                       intern?.completionStatus === "completed"
                         ? "bg-green-500/20 text-green-500 border-green-500/30"
-                        : "bg-white/10 text-[var(--color-text-muted)] border-white/5"
+                        : "bg-white/10 text-text-muted border-white/5"
                     }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-bold text-[var(--color-text-primary)]">
+                  <span className="text-sm font-bold text-text-primary">
                     Certificate
                   </span>
                 </div>
                 {intern?.certificateUrl ? (
                   <a
-                    href={intern.certificateUrl.startsWith('http') ? intern.certificateUrl : `${FILE_BASE_URL}${intern.certificateUrl}`}
+                    href={
+                      intern.certificateUrl.startsWith("http")
+                        ? intern.certificateUrl
+                        : `${FILE_BASE_URL}${intern.certificateUrl}`
+                    }
                     target="_blank"
                     rel="noreferrer"
                     className="p-1 hover:text-green-500 transition-transform hover:scale-110"

@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/layout/Sidebar';
 import { Spinner } from '../components/ui';
 
 const AppLayout = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -22,6 +23,12 @@ const AppLayout = () => {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // ─── Intern Access Guard ───────────────────────────────────────────────────
+  // If the user is an Intern, they are restricted to /intern/dashboard ONLY.
+  if (user?.profileLabel === 'Intern' && location.pathname !== '/intern/dashboard') {
+    return <Navigate to="/intern/dashboard" replace />;
+  }
 
   return (
     <div className="flex h-screen bg-[var(--color-bg-base)] overflow-hidden">

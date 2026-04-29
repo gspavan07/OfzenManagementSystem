@@ -263,7 +263,7 @@ const approveIntern = asyncHandler(async (req, res) => {
       name: intern.userId.name,
       email: intern.userId.email,
       offerLetterPath: absolutePath,
-      batchName: intern.batchId.batchName,
+      role: intern.internshipId.title,
       domain: intern.internshipId.domain,
     });
   } catch (error) {
@@ -307,7 +307,6 @@ const getInternMe = asyncHandler(async (req, res) => {
 
   res.json({ success: true, intern: { ...intern.toObject(), project } });
 });
-
 
 // PUT /api/interns/:id/mark-week
 const markWeekCompleted = asyncHandler(async (req, res) => {

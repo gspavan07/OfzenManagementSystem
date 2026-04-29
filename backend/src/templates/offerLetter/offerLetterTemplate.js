@@ -160,7 +160,7 @@ const generateOfferLetterHtml = (data) => {
 
         .signature-section {
             position: absolute;
-            bottom: 140px;
+            bottom: 110px;
             left: 60px;
             right: 50px;
             margin-top: 50px;

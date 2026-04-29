@@ -58,7 +58,7 @@ const NAV_ITEMS = [
         label: "All Employees",
         icon: Users,
         to: "/employees",
-        permission: "employees.view",
+        permission: "employees.edit",
       },
       {
         label: "Payroll",
@@ -82,13 +82,13 @@ const NAV_ITEMS = [
         label: "Batches",
         icon: BookOpen,
         to: "/intern-batches",
-        permission: "internBatches.view",
+        permission: "internBatches.create",
       },
       {
         label: "Registrations",
         icon: UserCheck,
         to: "/intern-registrations",
-        permission: "internRegistrations.view",
+        permission: "internRegistrations.approve",
       },
       {
         label: "Intern Revenue",
@@ -131,7 +131,7 @@ const NAV_ITEMS = [
         label: "Profiles",
         icon: Shield,
         to: "/settings/profiles",
-        permission: "profileManagement.view",
+        permission: "profileManagement.edit",
       },
 
       {

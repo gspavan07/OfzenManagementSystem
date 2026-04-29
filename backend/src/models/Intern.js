@@ -20,6 +20,12 @@ const internSchema = new mongoose.Schema(
     course: { type: String, trim: true },
     // After the 'course' field, add:
     passOutYear: { type: Number },
+    stipend: { type: Number, default: 0 },
+    workMode: {
+      type: String,
+      enum: ["Remote", "On-site", "Hybrid"],
+      default: "Remote",
+    },
 
     paymentStatus: {
       type: String,

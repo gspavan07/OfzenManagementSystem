@@ -216,20 +216,36 @@ const createIntern = asyncHandler(async (req, res) => {
 
 // PUT /api/interns/:id/approve
 const approveIntern = asyncHandler(async (req, res) => {
-  const intern = await Intern.findById(req.params.id)
-    .populate("userId", "name email")
-    .populate({
-      path: "batchId",
-      populate: { path: "internshipId" },
-    });
+  const intern = await Intern.findById(req.params.id);
 
   if (!intern) {
     res.status(404);
     throw new Error("Intern not found");
   }
 
-  // 1. Update Status
+  // 1. Update Status & Details
+  const { batchId, workMode } = req.body;
+
+  if (!batchId) {
+    res.status(400);
+    throw new Error("Batch ID is required for approval");
+  }
+
   intern.registrationStatus = "approved";
+  intern.batchId = batchId;
+  intern.workMode = workMode || "Remote";
+
+  await intern.save();
+
+  // Refresh populate for template (batchId and its nested internshipId)
+  await intern.populate([
+    { path: "userId", select: "name email" },
+    {
+      path: "batchId",
+      populate: { path: "internshipId" },
+    },
+    { path: "internshipId" },
+  ]);
 
   // 2. Generate Offer Letter
   try {
@@ -292,85 +308,6 @@ const getInternMe = asyncHandler(async (req, res) => {
   res.json({ success: true, intern: { ...intern.toObject(), project } });
 });
 
-// PUT /api/intern-batches/:id/onboard
-const onboardBatch = asyncHandler(async (req, res) => {
-  const { startDate, endDate, mentorId, stipend } = req.body;
-  const batch = await InternBatch.findById(req.params.id);
-
-  if (!batch) {
-    res.status(404);
-    throw new Error("Batch not found");
-  }
-
-  // 1. Update Batch Info
-  batch.startDate = startDate || batch.startDate;
-  batch.endDate = endDate || batch.endDate;
-  batch.mentorId = mentorId || batch.mentorId;
-  batch.stipend = stipend || batch.stipend;
-  batch.status = "active"; // Move to active status
-  await batch.save();
-
-  // 2. Find Pending Interns
-  const pendingInterns = await Intern.find({
-    batchId: batch._id,
-    registrationStatus: "pending",
-  }).populate("userId", "name email");
-
-  const results = {
-    total: pendingInterns.length,
-    success: 0,
-    failed: 0,
-    errors: [],
-  };
-
-  // 3. Process each intern (similar to approveIntern)
-  for (const intern of pendingInterns) {
-    try {
-      // Refresh populate for template
-      const fullIntern = await Intern.findById(intern._id)
-        .populate("userId", "name email")
-        .populate({
-          path: "batchId",
-          populate: { path: "internshipId" },
-        });
-
-      // Update Status
-      fullIntern.registrationStatus = "approved";
-
-      const outputDir = path.join(
-        __dirname,
-        "../../uploads/pdfs/offer_letters",
-      );
-      const { absolutePath, fullUrl } = await generateOfferLetterPdf({
-        intern: fullIntern,
-        user: fullIntern.userId,
-        batch: fullIntern.batchId,
-        internship: fullIntern.internshipId,
-        outputDir,
-      });
-
-      fullIntern.offerLetterUrl = fullUrl;
-      fullIntern.offerLetterSent = true;
-
-      await sendApprovalEmails({
-        name: fullIntern.userId.name,
-        email: fullIntern.userId.email,
-        offerLetterPath: absolutePath,
-        role: fullIntern.batchId.internshipId.title,
-        domain: fullIntern.batchId.internshipId.domain,
-      });
-
-      await fullIntern.save();
-      results.success++;
-    } catch (err) {
-      console.error(`Failed to onboard intern ${intern._id}:`, err);
-      results.failed++;
-      results.errors.push({ id: intern._id, error: err.message });
-    }
-  }
-
-  res.json({ success: true, results, batch });
-});
 
 // PUT /api/interns/:id/mark-week
 const markWeekCompleted = asyncHandler(async (req, res) => {
@@ -439,7 +376,6 @@ module.exports = {
   approveIntern,
   rejectIntern,
   getInternMe,
-  onboardBatch,
   markWeekCompleted,
   bulkMarkWeekCompleted,
 };

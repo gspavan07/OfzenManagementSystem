@@ -53,13 +53,13 @@ const InternRegistrations = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [batchModalOpen, setBatchModalOpen] = useState(false);
-  const [onboardModalOpen, setOnboardModalOpen] = useState(false);
-
   const [selectedIntern, setSelectedIntern] = useState(null);
-  const [selectedBatch, setSelectedBatch] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [onboardingProgress, setOnboardingProgress] = useState(null);
+
+  // Single Approval State
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [approvalBatchId, setApprovalBatchId] = useState("");
+  const [approvalWorkMode, setApprovalWorkMode] = useState("Remote");
 
   // Basic & User Details
   const [name, setName] = useState("");
@@ -76,22 +76,9 @@ const InternRegistrations = () => {
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [receiptNumber, setReceiptNumber] = useState("");
 
-  // Onboarding Form State
-  const [onboardStart, setOnboardStart] = useState("");
-  const [onboardEnd, setOnboardEnd] = useState("");
-  const [onboardMentor, setOnboardMentor] = useState("");
-  const [onboardStipend, setOnboardStipend] = useState(0);
-
-  // Group interns by batch for the main view
-  const batchesWithPending = batches
-    .map((batch) => {
-      const pendingCount = interns.filter(
-        (i) =>
-          i.batchId?._id === batch._id && i.registrationStatus === "pending",
-      ).length;
-      return { ...batch, pendingCount };
-    })
-    .filter((b) => b.pendingCount > 0);
+  const pendingInterns = interns.filter(
+    (i) => i.registrationStatus === "pending",
+  );
 
   const activeInterns = interns.filter(
     (i) => i.registrationStatus === "approved",
@@ -159,66 +146,42 @@ const InternRegistrations = () => {
     }
   };
 
-  const openBatchModal = (batch) => {
-    setSelectedBatch(batch);
-    setBatchModalOpen(true);
-  };
-
-  const openOnboardModal = (batch) => {
-    setSelectedBatch(batch);
-    setOnboardStart(
-      batch.startDate
-        ? new Date(batch.startDate).toISOString().split("T")[0]
-        : "",
-    );
-    setOnboardEnd(
-      batch.endDate ? new Date(batch.endDate).toISOString().split("T")[0] : "",
-    );
-    setOnboardMentor(batch.mentorId?._id || "");
-    setOnboardStipend(batch.stipend || 0);
-    setOnboardModalOpen(true);
-  };
-
-  const handleBulkOnboard = async (e) => {
-    e.preventDefault();
-    if (
-      !confirm(
-        `Are you sure you want to approve all ${selectedBatch.pendingCount} interns and send their offer letters?`,
-      )
-    )
+  const handleAction = async (id, action, row) => {
+    if (action === "approve") {
+      setSelectedIntern(row);
+      setApprovalBatchId("");
+      setApprovalWorkMode("Remote");
+      setApproveModalOpen(true);
       return;
-
-    setSubmitting(true);
-    try {
-      const res = await batchesApi.onboard(selectedBatch._id, {
-        startDate: onboardStart,
-        endDate: onboardEnd,
-        mentorId: onboardMentor,
-        stipend: Number(onboardStipend),
-      });
-
-      toast.success(
-        `Successfully onboarded ${res.data.results.success} interns!`,
-      );
-      setOnboardModalOpen(false);
-      setBatchModalOpen(false);
-      fetchInterns();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Onboarding failed");
-    } finally {
-      setSubmitting(false);
     }
-  };
 
-  const handleAction = async (id, action) => {
     if (!confirm(`Are you sure you want to ${action} this intern?`)) return;
     try {
-      if (action === "approve") await internsApi.approve(id);
       if (action === "reject") await internsApi.reject(id);
       toast.success(`Intern ${action}d successfully`);
       fetchInterns();
     } catch (err) {
       toast.error(err.response?.data?.message || "Action failed");
+    }
+  };
+
+  const handleApproveConfirm = async (e) => {
+    e.preventDefault();
+    if (!approvalBatchId) return toast.error("Please select a batch");
+
+    setSubmitting(true);
+    try {
+      await internsApi.approve(selectedIntern._id, {
+        batchId: approvalBatchId,
+        workMode: approvalWorkMode,
+      });
+      toast.success("Intern approved and onboarded successfully!");
+      setApproveModalOpen(false);
+      fetchInterns();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Approval failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -302,7 +265,7 @@ const InternRegistrations = () => {
         row.registrationStatus === "pending" ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => handleAction(row._id, "approve")}
+              onClick={() => handleAction(row._id, "approve", row)}
               className="p-1.5 text-green-500 hover:text-green-600 transition-colors rounded-md hover:bg-green-500/10"
               title="Approve"
             >
@@ -337,59 +300,15 @@ const InternRegistrations = () => {
       />
 
       <div className="grid grid-cols-1 gap-8">
-        {/* Pending Batches Section */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <Rocket className="w-5 h-5 text-[var(--color-primary)]" />
-            <h2 className="text-lg font-bold text-[var(--color-text-primary)]">
-              Batches Awaiting Onboarding
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {batchesWithPending.length > 0 ? (
-              batchesWithPending.map((batch) => (
-                <Card
-                  key={batch._id}
-                  className="group hover:border-[var(--color-primary)] transition-all cursor-pointer"
-                  onClick={() => openBatchModal(batch)}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-2 bg-[var(--color-primary)]/10 rounded-lg group-hover:bg-[var(--color-primary)]/20 transition-colors">
-                      <Users className="w-5 h-5 text-[var(--color-primary)]" />
-                    </div>
-                    <Badge variant="warning" className="animate-pulse">
-                      {batch.pendingCount} Pending
-                    </Badge>
-                  </div>
-
-                  <h3 className="font-bold text-[var(--color-text-primary)] mb-1">
-                    {batch.batchName}
-                  </h3>
-                  <p className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider mb-4">
-                    {batch.domain}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
-                    <div className="text-[10px] text-[var(--color-text-muted)]">
-                      Created {new Date(batch.createdAt).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-1 text-[var(--color-primary)] font-bold text-xs">
-                      Review <ChevronRight className="w-3 h-3" />
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <div className="md:col-span-3 py-12 flex flex-col items-center justify-center bg-[var(--color-bg-elevated)] rounded-2xl border-2 border-dashed border-[var(--color-border)]">
-                <ShieldCheck className="w-12 h-12 text-[var(--color-text-muted)] mb-3 opacity-20" />
-                <p className="text-[var(--color-text-muted)] font-medium">
-                  All clear! No pending batch approvals.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+        {/* Pending Registrations List */}
+        <Card title={`Pending Registrations (${pendingInterns.length})`}>
+          <Table
+            columns={columns}
+            data={pendingInterns}
+            loading={internLoading}
+            emptyMessage="No pending registrations"
+          />
+        </Card>
 
         {/* Active Interns List */}
         <Card title={`Active / Approved Interns (${activeInterns.length})`}>
@@ -591,127 +510,6 @@ const InternRegistrations = () => {
         </form>
       </Modal>
 
-      {/* Batch Drill-down Modal */}
-      <Modal
-        isOpen={batchModalOpen}
-        onClose={() => setBatchModalOpen(false)}
-        title={
-          selectedBatch ? `Reviewing Batch: ${selectedBatch.batchName}` : ""
-        }
-        size="4xl"
-      >
-        {selectedBatch && (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-[var(--color-primary)]/5 rounded-xl border border-[var(--color-primary)]/20">
-              <div>
-                <h3 className="font-bold text-[var(--color-text-primary)]">
-                  Ready for Onboarding?
-                </h3>
-                <p className="text-sm text-[var(--color-text-muted)]">
-                  Confirm details below to approve all{" "}
-                  {selectedBatch.pendingCount} students and send offer letters.
-                </p>
-              </div>
-              <Button
-                onClick={() => openOnboardModal(selectedBatch)}
-                className="shadow-lg shadow-primary/20"
-              >
-                <Rocket className="w-4 h-4 mr-2" /> Onboard & Approve Batch
-              </Button>
-            </div>
-
-            <Table
-              columns={columns}
-              data={interns.filter(
-                (i) =>
-                  i.batchId?._id === selectedBatch._id &&
-                  i.registrationStatus === "pending",
-              )}
-              emptyMessage="No pending students in this batch."
-            />
-          </div>
-        )}
-      </Modal>
-
-      {/* Bulk Onboarding Config Modal */}
-      <Modal
-        isOpen={onboardModalOpen}
-        onClose={() => setOnboardModalOpen(false)}
-        title="Finalize Onboarding Details"
-        size="lg"
-      >
-        <form onSubmit={handleBulkOnboard} className="space-y-6">
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex gap-3">
-            <AlertCircle className="w-5 h-5 text-yellow-500 shrink-0" />
-            <p className="text-xs text-yellow-700 leading-relaxed">
-              <strong>Action Required:</strong> Please confirm the final dates
-              and stipend for this batch. Once you click "Start Onboarding",
-              offer letters will be generated and sent to all pending interns in
-              this batch.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Start Date"
-              type="date"
-              value={onboardStart}
-              onChange={(e) => setOnboardStart(e.target.value)}
-              required
-            />
-            <Input
-              label="End Date"
-              type="date"
-              value={onboardEnd}
-              onChange={(e) => setOnboardEnd(e.target.value)}
-              required
-            />
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
-                Assign Mentor
-              </label>
-              <select
-                className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] outline-none focus:border-[var(--color-primary)]"
-                value={onboardMentor}
-                onChange={(e) => setOnboardMentor(e.target.value)}
-                required
-              >
-                <option value="">-- Select Mentor --</option>
-                {users
-                  .filter((u) => u.profileId?.label !== "Intern")
-                  .map((u) => (
-                    <option key={u._id} value={u._id}>
-                      {u.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-
-            <Input
-              label="Stipend (Monthly ₹)"
-              type="number"
-              value={onboardStipend}
-              onChange={(e) => setOnboardStipend(e.target.value)}
-              placeholder="0 for unpaid"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-6 border-t border-[var(--color-border)]">
-            <Button
-              variant="ghost"
-              type="button"
-              onClick={() => setOnboardModalOpen(false)}
-            >
-              Back
-            </Button>
-            <Button type="submit" loading={submitting}>
-              Start Onboarding & Send Mails
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
       {/* View Details Modal */}
       <Modal
         isOpen={detailsModalOpen}
@@ -850,6 +648,107 @@ const InternRegistrations = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Approve Intern Modal */}
+      <Modal
+        isOpen={approveModalOpen}
+        onClose={() => setApproveModalOpen(false)}
+        title="Approve & Onboard Intern"
+        size="md"
+      >
+        <form onSubmit={handleApproveConfirm} className="space-y-6">
+          <div className="p-4 bg-[var(--color-primary)]/5 border border-[var(--color-primary)]/20 rounded-xl">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-[var(--color-primary)]/10 rounded-full flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-[var(--color-primary)]" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[var(--color-text-primary)]">
+                  {selectedIntern?.userId?.name}
+                </h4>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  {selectedIntern?.internshipId?.title || "No Role Assigned"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                Assign to Batch
+              </label>
+              <select
+                className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+                value={approvalBatchId}
+                onChange={(e) => setApprovalBatchId(e.target.value)}
+                required
+              >
+                <option value="">-- Select Batch --</option>
+                {batches
+                  .filter(
+                    (b) =>
+                      b.internshipId?._id ===
+                        selectedIntern?.internshipId?._id ||
+                      b.internshipId === selectedIntern?.internshipId?._id,
+                  )
+                  .map((b) => (
+                    <option key={b._id} value={b._id}>
+                      {b.batchName} (
+                      {new Date(b.startDate).toLocaleDateString()})
+                    </option>
+                  ))}
+              </select>
+              {batches.filter(
+                (b) =>
+                  b.internshipId?._id === selectedIntern?.internshipId?._id ||
+                  b.internshipId === selectedIntern?.internshipId?._id,
+              ).length === 0 && (
+                <p className="text-[10px] text-red-500 mt-1">
+                  No upcoming batches found for this internship role.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                Work Mode
+              </label>
+              <select
+                className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+                value={approvalWorkMode}
+                onChange={(e) => setApprovalWorkMode(e.target.value)}
+                required
+              >
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg flex gap-3">
+            <AlertCircle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+            <p className="text-[10px] text-yellow-700 leading-relaxed">
+              Upon approval, an offer letter will be automatically generated and
+              sent to the intern's email address.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={() => setApproveModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" loading={submitting}>
+              Approve & Send Offer Letter
+            </Button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

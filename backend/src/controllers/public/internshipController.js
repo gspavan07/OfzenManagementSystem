@@ -138,47 +138,11 @@ const registerIntern = asyncHandler(async (req, res) => {
     profileId: internProfile._id,
   });
 
-  // 4. Auto-Batching Logic
-  const Internship = require("../../models/Internship");
-  const InternBatch = require("../../models/InternBatch");
-  const internship = await Internship.findById(id);
-
-  // Find latest upcoming batch for this internship
-  let batch = await InternBatch.findOne({
-    internshipId: id,
-    status: "upcoming",
-  }).sort({ createdAt: -1 });
-
-  // If batch exists, check count
-  if (batch) {
-    const currentCount = await Intern.countDocuments({ batchId: batch._id });
-    if (currentCount >= internship.openings) {
-      // Batch full, create new one
-      const batchCount = await InternBatch.countDocuments({ internshipId: id });
-      batch = await InternBatch.create({
-        batchName: `${internship.title} - Batch ${batchCount + 1}`,
-        internshipId: id,
-        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default +7 days
-        endDate: new Date(Date.now() + 67 * 24 * 60 * 60 * 1000), // Default +2 months
-        status: "upcoming",
-      });
-    }
-  } else {
-    // No batch exists, create first one
-    batch = await InternBatch.create({
-      batchName: `${internship.title} - Batch 1`,
-      internshipId: id,
-      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 67 * 24 * 60 * 60 * 1000),
-      status: "upcoming",
-    });
-  }
-
-  // 5. Create Intern Record
+  // 4. Create Intern Record (Removed Auto-Batching as per requirement)
   await Intern.create({
     userId: user._id,
     internshipId: id,
-    batchId: batch._id,
+    // batchId remains undefined/null until manual approval
     college,
     course,
     passOutYear,

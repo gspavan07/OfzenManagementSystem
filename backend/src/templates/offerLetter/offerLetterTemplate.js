@@ -7,7 +7,6 @@ const { generatePdfFromHtml } = require("../../utils/pdfGenerator");
  */
 const generateOfferLetterHtml = (data) => {
   const { intern } = data;
-  console.log(intern);
 
   const logoPath = path.join(__dirname, "logo.png");
   let logoBase64 = "";
@@ -27,8 +26,7 @@ const generateOfferLetterHtml = (data) => {
   }
 
   const companyName = process.env.COMPANY_NAME || "Ofzen Technologies";
-  const companyAddress =
-    process.env.COMPANY_ADDRESS || "Kakinada, Andhra Pradesh";
+  const companyAddress = process.env.COMPANY_ADDRESS || "Bengaluru, Karnataka";
   const companyWebsite = process.env.COMPANY_WEBSITE || "www.ofzen.in";
   const companyEmail = "careers@ofzen.in";
 
@@ -59,240 +57,237 @@ const generateOfferLetterHtml = (data) => {
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      font-size: 13.5px;
-      color: #1a1a2e;
-      background: #fff;
-      line-height: 1.7;
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 13.5px;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.7;
+        }
 
-    .letterhead {
-      padding: 50px;
-      padding-bottom: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+        .letterhead {
+            padding: 50px;
+            padding-bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
 
-    .company-name {
-      font-size: 22px;
-      font-weight: 800;
-      color: #2563eb;
-      letter-spacing: -0.5px;
-    }
+        .company-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #2563eb;
+            letter-spacing: -0.5px;
+        }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .logo-container img {
-      height: 35px;
-      width: auto;
-    }
+        .logo-container img {
+            height: 35px;
+            width: auto;
+        }
 
-    .company-details {
-      font-size: 11px;
-      color: #6b7280;
-      margin-top: 4px;
-      line-height: 1.5;
-    }
+        .company-details {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
 
-    .company-badge {
-      background: #f0f0ff;
-      border: 1.5px solid #2563eb;
-      border-radius: 6px;
-      padding: 8px 14px;
-      text-align: right;
-    }
+        .company-badge {
+            background: #f0f0ff;
+            border: 1.5px solid #2563eb;
+            border-radius: 6px;
+            padding: 8px 14px;
+            text-align: right;
+        }
 
-    .company-badge .msme {
-      font-size: 10px;
-      color: #2563eb;
-      font-weight: 700;
-    }
+        .company-badge .msme {
+            font-size: 10px;
+            color: #2563eb;
+            font-weight: 700;
+        }
 
-    .company-badge .reg {
-      font-size: 9px;
-      color: #9ca3af;
-      margin-top: 2px;
-    }
+        .company-badge .reg {
+            font-size: 9px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
 
-    .body {
-      padding: 30px 50px;
-    }
+        .body {
+            padding: 30px 50px;
+        }
 
-    .date {
-    text-align: right;
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 24px;
-    }
+        .date {
+            text-align: right;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
 
-    .doc-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a1a2e;
-      text-align: center;
-      margin-bottom: 24px;
-    }
+        .doc-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            text-align: center;
+            margin-bottom: 24px;
+        }
 
-    .salutation {
-      margin-bottom: 16px;
-    }
+        .salutation {
+            margin-bottom: 16px;
+        }
 
-    .body-text {
-      margin-bottom: 14px;
-      text-align: justify;
-    }
+        .body-text {
+            margin-bottom: 14px;
+            text-align: justify;
+        }
+            
+        .details {
+            padding: 4px 30px;
+        }
 
-    .highlight-box {
-      background: #f0f0ff;
-      border-left: 4px solid #2563eb;
-      padding: 14px 18px;
-      border-radius: 0 6px 6px 0;
-      margin: 20px 0;
-    }
+        .signature-section {
+            position: absolute;
+            bottom: 140px;
+            left: 60px;
+            right: 50px;
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
 
-    .highlight-box table {
-      width: 100%;
-    }
+        .sig-box {
+            text-align: center;
+        }
 
-    .highlight-box td {
-      padding: 5px 0;
-    }
+        .sign-container {
+            display: flex;
+            align-items: center;
+        }
 
-    .highlight-box td:first-child {
-      font-weight: 600;
-      color: #4f46e5;
-      width: 180px;
-    }
+        .sign-container img {
+            height: 80px;
+            width: auto;
+        }
 
-    .signature-section {
-        position: absolute;
-        bottom: 250px;
-        left: 50px;
-        right: 50px;
-        margin-top: 50px;
-        display: flex;
-        justify-content: space-between;
-    }
+        .sig-line {
+            border-top: 1px solid #1a1a2e;
+            padding-top: 6px;
+            font-size: 12px;
+            color: #374151;
+        }
 
-    .sig-box {
-        text-align: center;
-    }
-
-    .sign-container {
-      display: flex;
-      align-items: center;
-    }
-    
-    .sign-container img {
-      height: 90px;
-      width: auto;
-    }
-    .sig-line {
-      border-top: 1px solid #1a1a2e;
-      padding-top: 6px;
-      font-size: 12px;
-      color: #374151;
-    }
-
-    .footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 14px 40px;
-      background: #f8f9ff;
-      border-top: 1px solid #e8ecf8;
-      font-size: 10px;
-      color: #9ca3af;
-      text-align: center;
-    }
-  </style>
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 14px 40px;
+            background: #f8f9ff;
+            border-top: 1px solid #e8ecf8;
+            font-size: 10px;
+            color: #9ca3af;
+            text-align: center;
+        }
+    </style>
 </head>
+
 <body>
-<div class="letterhead">
-  <div>
-    <div class="logo-container">
-      ${logoBase64 ? `<img src="${logoBase64}" alt="Logo">` : ""}
-      <div class="company-name">${companyName}</div>
-    </div>
-    <div class="company-details">
+    <div class="letterhead">
+        <div>
+            <div class="logo-container">
+                ${logoBase64 ? `<img src="${logoBase64}" alt="Logo">` : ""}
+                <div class="company-name">${companyName}</div>
+            </div>
+            <div class="company-details">
 
-      ${companyAddress}<br>
-      ${companyEmail} | ${companyWebsite}
-    </div>
-  </div>
-  
-</div>
-
-<div class="body">
-
-            <div class="doc-title">Internship Offer Letter</div>
-            <div class="date">Date: ${issueDate}</div>
-
-            <div class="salutation">Dear <strong>${intern.userId?.name}</strong>,</div>
-
-            <p class="body-text">
-                <strong>Congratulations from Ofzen Technologies.</strong>
-            </p>
-
-            <p class="body-text">
-                We are pleased to extend this offer of an internship opportunity at <strong>${companyName}</strong>. 
-                Following a thorough review of your application, we are delighted to welcome you to our 
-                team as an <strong>${intern?.batchId?.internshipId?.title}</strong>.
-            </p>
-            <p class="body-text">
-                The internship program will commence on <strong>${startDate}</strong> and conclude on <strong>${endDate}</strong>,
-                 spanning a duration of <strong>${intern?.batchId?.internshipId?.durationWeeks} weeks</strong>, and will be conducted in <strong>Hybrid Mode</strong>.
-
-            </p>
-            <p class="body-text">
-                Throughout this internship, you will have the opportunity to contribute to real-world 
-                projects under the mentorship and guidance of our experienced professionals. You will be immersed 
-                in a dynamic startup culture and environment one that encourages innovation and collaborative 
-                problem-solving. This hands-on experience is designed to provide you with meaningful industry exposure and 
-                practical skill development within a fast-paced, entrepreneurial setting. 
-            </p>
-
-            <p class="body-text">
-                Upon successful completion of the program, you will receive an internship completion certificate from ${companyName}.
-            </p>
-
-            <p class="body-text">
-                We look forward to having you with us and wish you a rewarding internship experience.
-            </p>
-
-            <div class="signature-section">
-                <div class="sig-box">
-                    <div class="sign-container">
-                        ${signBase64 ? `<img src="${signBase64}" alt="Signature">` : ""}
-                    </div>
-                    <div class="sig-line">
-                        Authorized Signatory
-                        <div class="sig-name">${companyName}</div>
-                    </div>
-                </div>
-                
+                ${companyAddress}<br>
+                ${companyEmail} | ${companyWebsite}
             </div>
         </div>
 
-<div class="footer">
-  ${companyName} | ${companyAddress} | ${companyEmail} | ${companyWebsite}
-</div>
+    </div>
+
+    <div class="body">
+
+        <div class="doc-title">Internship Offer Letter</div>
+        <div class="date">Date: ${issueDate}</div>
+
+        <div class="salutation">Dear <strong>${intern.userId?.name}</strong>,</div>
+
+        <p class="body-text">
+            <strong>Congratulations from Ofzen Technologies.</strong>
+        </p>
+
+        <p class="body-text">
+            We are pleased to extend this offer of an internship opportunity at <strong>${companyName}</strong>.
+            Following a thorough review of your application, we are delighted to welcome you to our
+            team as an <strong>${intern?.batchId?.internshipId?.title}</strong>.
+        </p>
+        <div class="body-text">
+            <p>Here are the details of your internship:</p>
+            <ul class="details">
+            <li ><strong>Role:</strong> ${intern?.batchId?.internshipId?.title}</li>
+            <li ><strong>Domain:</strong> ${intern?.batchId?.internshipId?.domain}</li>
+            <li ><strong>Start Date:</strong> ${startDate}</li>
+            <li ><strong>End Date:</strong> ${endDate}</li>
+            <li ><strong>Duration:</strong> ${intern?.batchId?.internshipId?.durationWeeks} Weeks</li>
+            <li ><strong>Work Mode:</strong> ${intern?.workMode || "Remote"}</li>
+            </ul>
+        </div>
+
+        <p class="body-text">
+            The candidate will receive a stipend during the internship period based on intern performance in accordance with company policies.
+        </p>
+
+        <p class="body-text">
+            Throughout this internship, you will have the opportunity to contribute to real-world
+            projects under the mentorship and guidance of our experienced professionals. You will be immersed
+            in a dynamic startup culture and environment one that encourages innovation and collaborative
+            problem-solving. This hands-on experience is designed to provide you with meaningful industry exposure and
+            practical skill development within a fast-paced, entrepreneurial setting.
+        </p>
+
+        <p class="body-text">
+            Upon successful completion of the program, you will receive an internship completion certificate from
+            ${companyName}.
+        </p>
+
+        <p class="body-text">
+            We look forward to having you with us and wish you a rewarding internship experience.
+        </p>
+
+        <div class="signature-section">
+            <div class="sig-box">
+                <div class="sign-container">
+                    ${signBase64 ? `<img src="${signBase64}" alt="Signature">` : ""}
+                </div>
+                <div class="sig-line">
+                    Authorized Signatory
+                    <div class="sig-name">${companyName}</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        ${companyName} | ${companyAddress} | ${companyEmail} | ${companyWebsite}
+    </div>
 </body>
+
 </html>`;
 };
 

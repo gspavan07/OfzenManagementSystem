@@ -19,6 +19,7 @@ import {
   UserPlus,
   ShieldCheck,
   AlertCircle,
+  FileText,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import {
@@ -185,6 +186,18 @@ const InternRegistrations = () => {
     }
   };
 
+  const handlePreviewCertificate = async (internId) => {
+    try {
+      const res = await internsApi.previewCertificate(internId);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      toast.error("Failed to generate preview");
+    }
+  };
+
   const columns = [
     {
       key: "name",
@@ -279,7 +292,17 @@ const InternRegistrations = () => {
               <XCircle className="w-4 h-4" />
             </button>
           </div>
-        ) : null,
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePreviewCertificate(row._id)}
+              className="p-1.5 text-[var(--color-primary)] hover:text-[var(--color-primary)]/80 transition-colors rounded-md hover:bg-[var(--color-primary)]/10"
+              title="Preview Certificate"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+          </div>
+        ),
     },
   ];
 

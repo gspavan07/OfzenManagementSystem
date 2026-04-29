@@ -108,7 +108,9 @@ export const internsApi = {
   assignProject: (data) => api.post('/interns/projects/assign', data),
   completeMilestone: (internId, week) => api.put(`/interns/projects/${internId}/milestone/${week}`),
   getCertificate: (internId) => api.get(`/interns/certificates/${internId}`),
-  generateCertificate: (data) => api.post('/interns/certificates/generate', data),
+  generateCertificate: (internId) => api.post(`/interns/certificates/generate`, { internId }),
+  sendCertificate: (internId) => api.post(`/interns/certificates/send/${internId}`),
+  previewCertificate: (internId) => api.get(`/interns/certificates/${internId}/preview`, { responseType: 'blob' }),
   verifyCertificate: (certId) => api.get(`/interns/certificates/verify/${certId}`),
   markWeekCompleted: (id, data) => api.put(`/interns/${id}/mark-week`, data),
 };

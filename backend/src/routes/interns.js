@@ -26,6 +26,8 @@ const {
   getCertificate,
   generateCertificate,
   verifyCertificate,
+  previewCertificate,
+  sendCertificateEmail,
 } = require("../controllers/internSelfController");
 
 // Public route — no auth
@@ -134,6 +136,19 @@ router.post(
   "/certificates/generate",
   checkPermission("mailSystem.sendCertificate"),
   generateCertificate,
+);
+router.get(
+  "/certificates/:internId/preview",
+  checkAnyPermission([
+    "mentorTools.viewInternProfiles",
+    "internRegistrations.view",
+  ]),
+  previewCertificate,
+);
+router.post(
+  "/certificates/send/:internId",
+  checkPermission("mailSystem.sendCertificate"),
+  sendCertificateEmail,
 );
 
 module.exports = router;

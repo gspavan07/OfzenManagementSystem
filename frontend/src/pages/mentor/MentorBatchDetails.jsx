@@ -1,28 +1,22 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { SectionHeader, Card, Badge, Button, Modal } from "../../components/ui";
 import {
-  SectionHeader,
-  Card,
-  Badge,
-  Button,
-  Modal,
-} from "../../components/ui";
-import {
-  Users,
+  ShieldCheck,
   Calendar,
   Settings,
   Target,
   UserCheck,
-  ChevronLeft,
+  CheckCircle2,
   ArrowLeft,
   Mail,
-  Phone,
+  FileText,
   BookOpen,
+  Award,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { batchesApi, internshipProjectsApi, internsApi } from "../../api";
 import toast from "react-hot-toast";
-import { CheckCircle2, Circle } from "lucide-react";
 
 const MentorBatchDetails = () => {
   const { id } = useParams();
@@ -122,13 +116,53 @@ const MentorBatchDetails = () => {
   const handleBulkMark = async (completed) => {
     setBulking(true);
     try {
-      await batchesApi.bulkMarkWeek(id, { weekNumber: selectedWeek, completed });
+      await batchesApi.bulkMarkWeek(id, {
+        weekNumber: selectedWeek,
+        completed,
+      });
       toast.success(`Week ${selectedWeek} updated for everyone`);
       fetchDetails();
     } catch (err) {
       toast.error("Bulk update failed");
     } finally {
       setBulking(false);
+    }
+  };
+
+  const handlePreviewCertificate = async (intern) => {
+    if (intern.certificateGenerated && intern.certificateUrl) {
+      window.open(intern.certificateUrl, "_blank");
+      return;
+    }
+
+    try {
+      const res = await internsApi.previewCertificate(intern._id);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+      setTimeout(() => window.URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      toast.error("Failed to generate preview");
+    }
+  };
+
+  const handleGenerateCertificate = async (internId) => {
+    try {
+      await internsApi.generateCertificate(internId);
+      toast.success("Certificate generated successfully!");
+      fetchDetails();
+    } catch (err) {
+      toast.error("Failed to generate certificate");
+    }
+  };
+
+  const handleSendCertificate = async (internId) => {
+    try {
+      await internsApi.sendCertificate(internId);
+      toast.success("Certificate sent to intern's email!");
+      fetchDetails();
+    } catch (err) {
+      toast.error("Failed to send certificate");
     }
   };
 
@@ -189,6 +223,16 @@ const MentorBatchDetails = () => {
         >
           Batch Progress
         </button>
+        <button
+          onClick={() => setActiveTab("certificates")}
+          className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+            activeTab === "certificates"
+              ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+              : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+          }`}
+        >
+          Certificates
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -222,7 +266,10 @@ const MentorBatchDetails = () => {
                     </thead>
                     <tbody className="divide-y divide-[var(--color-border)]">
                       {interns?.map((intern) => (
-                        <tr key={intern._id} className="hover:bg-white/5 transition-colors group">
+                        <tr
+                          key={intern._id}
+                          className="hover:bg-white/5 transition-colors group"
+                        >
                           <td className="py-4 px-2">
                             <div className="flex flex-col">
                               <span className="font-bold text-[var(--color-text-primary)]">
@@ -230,7 +277,8 @@ const MentorBatchDetails = () => {
                               </span>
                               <div className="flex items-center gap-3 mt-1 text-xs text-[var(--color-text-muted)]">
                                 <span className="flex items-center gap-1">
-                                  <Mail className="w-3 h-3" /> {intern.userId?.email}
+                                  <Mail className="w-3 h-3" />{" "}
+                                  {intern.userId?.email}
                                 </span>
                               </div>
                             </div>
@@ -248,20 +296,131 @@ const MentorBatchDetails = () => {
                             </Badge>
                           </td>
                           <td className="py-4 px-2 text-right">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => openAssignModal(intern)}
-                              className="shadow-sm border-[var(--color-border)]"
-                            >
-                              <Target className="w-3.5 h-3.5 mr-1.5" />
-                              {intern.projectAssigned ? "Reassign" : "Assign"}
-                            </Button>
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => openAssignModal(intern)}
+                                className="shadow-sm border-[var(--color-border)]"
+                              >
+                                <Target className="w-3.5 h-3.5 mr-1.5" />
+                                {intern.projectAssigned ? "Reassign" : "Assign"}
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </Card>
+          ) : activeTab === "certificates" ? (
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-5 h-5 text-[var(--color-primary)]" />
+                    <h3 className="font-bold text-lg text-[var(--color-text-primary)]">
+                      Intern Certificates
+                    </h3>
+                  </div>
+                  <Badge variant="secondary">
+                    {interns?.filter((i) => i.completionStatus === "completed").length} Eligible
+                  </Badge>
+                </div>
+
+                <div className="space-y-4">
+                  {interns?.map((intern) => (
+                    <div
+                      key={intern._id}
+                      className="p-4 bg-white/5 border border-[var(--color-border)] rounded-xl group hover:border-[var(--color-primary)]/30 transition-all"
+                    >
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] font-bold">
+                            {intern.userId?.name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-[var(--color-text-primary)]">
+                              {intern.userId?.name}
+                            </p>
+                            <p className="text-xs text-[var(--color-text-muted)]">
+                              Status:{" "}
+                              <span
+                                className={
+                                  intern.completionStatus === "completed"
+                                    ? "text-green-500"
+                                    : "text-orange-500"
+                                }
+                              >
+                                {intern.completionStatus || "Ongoing"}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {intern.offerLetterUrl && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => window.open(intern.offerLetterUrl, "_blank")}
+                              className="shadow-sm border-[var(--color-border)] text-blue-500 hover:bg-blue-500/10"
+                            >
+                              <FileText className="w-3.5 h-3.5 mr-1.5" />
+                              Offer Letter
+                            </Button>
+                          )}
+
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handlePreviewCertificate(intern)}
+                            className="shadow-sm border-[var(--color-border)] text-[var(--color-primary)]"
+                          >
+                            <FileText className="w-3.5 h-3.5 mr-1.5" />
+                            {intern.certificateGenerated ? "View PDF" : "Preview"}
+                          </Button>
+
+                          {intern.completionStatus === "completed" && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleGenerateCertificate(intern._id)}
+                              disabled={intern.certificateGenerated}
+                              className={`shadow-sm border-[var(--color-border)] ${
+                                intern.certificateGenerated
+                                  ? "opacity-50"
+                                  : "text-green-600 hover:bg-green-500/10"
+                              }`}
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                              {intern.certificateGenerated ? "Generated" : "Generate"}
+                            </Button>
+                          )}
+
+                          {intern.certificateGenerated && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleSendCertificate(intern._id)}
+                              className="shadow-sm border-[var(--color-border)] text-orange-500 hover:bg-orange-500/10"
+                            >
+                              <Mail className="w-3.5 h-3.5 mr-1.5" />
+                              Send Mail
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {interns?.length === 0 && (
+                    <div className="text-center py-10 text-[var(--color-text-muted)]">
+                      No interns in this batch yet.
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -281,8 +440,12 @@ const MentorBatchDetails = () => {
                       value={selectedWeek}
                       onChange={(e) => setSelectedWeek(Number(e.target.value))}
                     >
-                      {Array.from({ length: batch.internshipId?.durationWeeks || 8 }).map((_, i) => (
-                        <option key={i + 1} value={i + 1}>Week {i + 1}</option>
+                      {Array.from({
+                        length: batch.internshipId?.durationWeeks || 8,
+                      }).map((_, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          Week {i + 1}
+                        </option>
                       ))}
                     </select>
                     <Button
@@ -298,24 +461,36 @@ const MentorBatchDetails = () => {
 
                 <div className="space-y-4">
                   {interns?.map((intern) => (
-                    <div key={intern._id} className="flex items-center justify-between p-4 bg-white/5 border border-[var(--color-border)] rounded-xl group hover:border-[var(--color-primary)]/30 transition-all">
+                    <div
+                      key={intern._id}
+                      className="flex items-center justify-between p-4 bg-white/5 border border-[var(--color-border)] rounded-xl group hover:border-[var(--color-primary)]/30 transition-all"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] font-bold">
                           {intern.userId?.name?.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-bold text-[var(--color-text-primary)]">{intern.userId?.name}</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">{intern.completedWeeks?.length || 0} Weeks Completed</p>
+                          <p className="font-bold text-[var(--color-text-primary)]">
+                            {intern.userId?.name}
+                          </p>
+                          <p className="text-xs text-[var(--color-text-muted)]">
+                            {intern.completedWeeks?.length || 0} Weeks Completed
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {Array.from({ length: batch.internshipId?.durationWeeks || 8 }).map((_, i) => {
+                        {Array.from({
+                          length: batch.internshipId?.durationWeeks || 8,
+                        }).map((_, i) => {
                           const week = i + 1;
-                          const isCompleted = intern.completedWeeks?.includes(week);
+                          const isCompleted =
+                            intern.completedWeeks?.includes(week);
                           return (
                             <button
                               key={week}
-                              onClick={() => handleMarkWeek(intern._id, week, !isCompleted)}
+                              onClick={() =>
+                                handleMarkWeek(intern._id, week, !isCompleted)
+                              }
                               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all border ${
                                 isCompleted
                                   ? "bg-green-500 text-white border-green-600"
@@ -323,7 +498,11 @@ const MentorBatchDetails = () => {
                               }`}
                               title={`Week ${week}`}
                             >
-                              {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-[10px]">{week}</span>}
+                              {isCompleted ? (
+                                <CheckCircle2 className="w-4 h-4" />
+                              ) : (
+                                <span className="text-[10px]">{week}</span>
+                              )}
                             </button>
                           );
                         })}
@@ -437,7 +616,10 @@ const MentorBatchDetails = () => {
                     <h5 className="font-bold text-[var(--color-text-primary)]">
                       {proj.title}
                     </h5>
-                    <Badge variant="secondary" className="text-[10px] uppercase tracking-tighter px-2">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] uppercase tracking-tighter px-2"
+                    >
                       {proj.difficulty}
                     </Badge>
                   </div>
@@ -446,7 +628,8 @@ const MentorBatchDetails = () => {
                   </p>
                   <div className="flex justify-end mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1">
-                      Assign Project <ArrowLeft className="w-3 h-3 rotate-180" />
+                      Assign Project{" "}
+                      <ArrowLeft className="w-3 h-3 rotate-180" />
                     </span>
                   </div>
                 </div>

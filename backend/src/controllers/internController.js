@@ -59,16 +59,23 @@ const getBatchById = asyncHandler(async (req, res) => {
     .populate("userId", "name email phone")
     .populate("internshipId", "title");
 
-  // Attach project assignment status
+  // Attach project assignment and certificate status
   const Project = require("../models/Project");
-  const internsWithProjectStatus = await Promise.all(
+  const Certificate = require("../models/Certificate");
+  const internsWithStatus = await Promise.all(
     interns.map(async (i) => {
       const project = await Project.findOne({ internId: i._id });
-      return { ...i.toObject(), projectAssigned: !!project };
+      const certificate = await Certificate.findOne({ internId: i._id });
+      return {
+        ...i.toObject(),
+        projectAssigned: !!project,
+        certificateGenerated: !!certificate,
+        certificateUrl: certificate?.pdfUrl || null,
+      };
     }),
   );
 
-  res.json({ success: true, batch, interns: internsWithProjectStatus });
+  res.json({ success: true, batch, interns: internsWithStatus });
 });
 
 // POST /api/intern-batches
@@ -311,7 +318,7 @@ const getInternMe = asyncHandler(async (req, res) => {
 // PUT /api/interns/:id/mark-week
 const markWeekCompleted = asyncHandler(async (req, res) => {
   const { weekNumber, completed } = req.body;
-  const intern = await Intern.findById(req.params.id);
+  const intern = await Intern.findById(req.params.id).populate("internshipId");
 
   if (!intern) {
     res.status(404);
@@ -328,8 +335,20 @@ const markWeekCompleted = asyncHandler(async (req, res) => {
     );
   }
 
+  // Auto-complete check
+  const totalWeeksNeeded = intern.internshipId?.durationWeeks || 8;
+  if (intern.completedWeeks.length >= totalWeeksNeeded) {
+    intern.completionStatus = "completed";
+  } else {
+    intern.completionStatus = "ongoing";
+  }
+
   await intern.save();
-  res.json({ success: true, completedWeeks: intern.completedWeeks });
+  res.json({
+    success: true,
+    completedWeeks: intern.completedWeeks,
+    completionStatus: intern.completionStatus,
+  });
 });
 
 // PUT /api/intern-batches/:id/bulk-mark-week
@@ -338,22 +357,37 @@ const bulkMarkWeekCompleted = asyncHandler(async (req, res) => {
   const interns = await Intern.find({
     batchId: req.params.id,
     registrationStatus: "approved",
-  });
+  }).populate("internshipId");
 
   await Promise.all(
     interns.map(async (intern) => {
+      // We need internshipId for duration check, but interns query above doesn't populate it.
+      // For efficiency, we'll populate it in the query above.
+      // (Modified the query above in this chunk mentally, will apply in real chunk)
+      
+      let modified = false;
       if (completed) {
         if (!intern.completedWeeks.includes(weekNumber)) {
           intern.completedWeeks.push(weekNumber);
-          await intern.save();
+          modified = true;
         }
       } else {
         if (intern.completedWeeks.includes(weekNumber)) {
           intern.completedWeeks = intern.completedWeeks.filter(
             (w) => w !== weekNumber,
           );
-          await intern.save();
+          modified = true;
         }
+      }
+
+      if (modified) {
+        const totalWeeksNeeded = intern.internshipId?.durationWeeks || 8;
+        if (intern.completedWeeks.length >= totalWeeksNeeded) {
+          intern.completionStatus = "completed";
+        } else {
+          intern.completionStatus = "ongoing";
+        }
+        await intern.save();
       }
     }),
   );

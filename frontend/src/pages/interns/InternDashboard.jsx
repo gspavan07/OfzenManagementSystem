@@ -92,8 +92,7 @@ const InternDashboard = () => {
             Hello, {currentUser?.name?.split(" ")[0]}!
           </h1>
           <p className="text-[var(--color-text-muted)] flex items-center gap-2">
-            <Calendar className="w-4 h-4" /> {internship?.title} • Batch{" "}
-            {batch?.batchName}
+            <Calendar className="w-4 h-4" /> {internship?.title}
           </p>
         </div>
         <div className="flex flex-col items-end gap-3 text-right">

@@ -51,11 +51,7 @@ export const Card = ({
   onClick,
   ...props
 }) => (
-  <div
-    className={`glass-card p-5 ${className}`}
-    onClick={onClick}
-    {...props}
-  >
+  <div className={`glass-card p-5 ${className}`} onClick={onClick} {...props}>
     {(title || action) && (
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -227,7 +223,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
     xl: "max-w-4xl",
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 max-h-screen flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}

@@ -203,8 +203,15 @@ const getInternById = asyncHandler(async (req, res) => {
 
 // POST /api/interns
 const createIntern = asyncHandler(async (req, res) => {
-  const { userId, batchId, college, course, paymentStatus, receiptNumber } =
-    req.body;
+  const {
+    userId,
+    internshipId,
+    batchId,
+    college,
+    course,
+    paymentStatus,
+    receiptNumber,
+  } = req.body;
   if (!userId || !batchId) {
     res.status(400);
     throw new Error("userId and batchId are required");
@@ -212,6 +219,7 @@ const createIntern = asyncHandler(async (req, res) => {
 
   const intern = await Intern.create({
     userId,
+    internshipId,
     batchId,
     college,
     course,
@@ -364,7 +372,7 @@ const bulkMarkWeekCompleted = asyncHandler(async (req, res) => {
       // We need internshipId for duration check, but interns query above doesn't populate it.
       // For efficiency, we'll populate it in the query above.
       // (Modified the query above in this chunk mentally, will apply in real chunk)
-      
+
       let modified = false;
       if (completed) {
         if (!intern.completedWeeks.includes(weekNumber)) {

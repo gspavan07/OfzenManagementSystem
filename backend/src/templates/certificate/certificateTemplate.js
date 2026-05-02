@@ -12,6 +12,8 @@ const generateCertificateHtml = (data) => {
   let logoBase64 = "";
   const logoLightPath = path.join(__dirname, "logo_light.png");
   let logoLightBase64 = "";
+  const dheerajSignPath = path.join(__dirname, "dheerajSignature.png");
+  let dheerajSignBase64 = "";
   const pavanSignPath = path.join(__dirname, "pavanSignature.png");
   let pavanSignBase64 = "";
   const stampPath = path.join(__dirname, "stamp.png");
@@ -37,6 +39,12 @@ const generateCertificateHtml = (data) => {
   try {
     const pavanSignBuffer = fs.readFileSync(pavanSignPath);
     pavanSignBase64 = `data:image/png;base64,${pavanSignBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Signature not found:", err);
+  }
+  try {
+    const dheerajSignBuffer = fs.readFileSync(dheerajSignPath);
+    dheerajSignBase64 = `data:image/png;base64,${dheerajSignBuffer.toString("base64")}`;
   } catch (err) {
     console.error("Signature not found:", err);
   }
@@ -278,7 +286,7 @@ const generateCertificateHtml = (data) => {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 110px;
+            margin-top: 70px;
         }
 
         .sig-block {}
@@ -288,6 +296,11 @@ const generateCertificateHtml = (data) => {
             align-items: center;
         }
 
+        .dSign-container img {
+            height: 20px;
+            margin-bottom: 20px;
+            width: 160px;
+        }
         .pSign-container img {
             height: 50px;
             margin-bottom: 20px;
@@ -312,8 +325,19 @@ const generateCertificateHtml = (data) => {
             margin-top: 2px;
         }
 
-        .cert-id-block {
+        .cert-id-block-top {
+            position: absolute;
+            top: 60px;
+            right: 50px;
             text-align: right;
+        }
+
+        .cert-id-block-bottom {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
         }
 
         .cert-id-label {
@@ -375,6 +399,10 @@ const generateCertificateHtml = (data) => {
             <div class="company-details">
                 <p>${companyEmail} | ${companyWebsite}</p>
             </div>
+            <div class="cert-id-block-top">
+                <div class="cert-id-label">Certificate ID</div>
+                <div class="cert-id-val">${certificate.certificateId}</div>
+            </div>
         </div>
 
         <div class="body">
@@ -426,21 +454,29 @@ const generateCertificateHtml = (data) => {
             <div class="sig-section">
                 <div class="sig-block">
                     <div class="pSign-container">
+                        ${dheerajSignBase64 ? `<img src="${dheerajSignBase64}" alt="Signature">` : ""}
+                    </div>
+                    <div class="sig-underline"></div>
+                    <div class="sig-label">Dheeraj Bathi</div>
+                    <div class="sig-company">${companyName}</div>
+                    <div class="sig-company">${companyAddress}</div>
+                </div>
+                <div class="sig-block">
+                    <div class="pSign-container">
                         ${pavanSignBase64 ? `<img src="${pavanSignBase64}" alt="Signature">` : ""}
                     </div>
                     <div class="sig-underline"></div>
                     <div class="sig-label">Pavan Gollapalli</div>
                     <div class="sig-company">${companyName}</div>
                     <div class="sig-company">${companyAddress}</div>
-
                 </div>
 
-                <div class="cert-id-block">
-                    <div class="cert-id-label">Certificate ID</div>
-                    <div class="cert-id-val">${certificate.certificateId}</div>
+                
+            </div>
+            <div class="cert-id-block-bottom">
+                    
                     <div class="verify">Verify at ${verifyUrl}</div>
                 </div>
-            </div>
         </div>
 
         <div class="stamp-container">

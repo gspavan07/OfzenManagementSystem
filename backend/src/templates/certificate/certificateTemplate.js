@@ -18,6 +18,8 @@ const generateCertificateHtml = (data) => {
   let pavanSignBase64 = "";
   const stampPath = path.join(__dirname, "stamp.png");
   let stampBase64 = "";
+  const googlePartnerPath = path.join(__dirname, "google.png");
+  let googlePartnerBase64 = "";
   try {
     const logoBuffer = fs.readFileSync(logoPath);
     logoBase64 = `data:image/png;base64,${logoBuffer.toString("base64")}`;
@@ -47,6 +49,12 @@ const generateCertificateHtml = (data) => {
     dheerajSignBase64 = `data:image/png;base64,${dheerajSignBuffer.toString("base64")}`;
   } catch (err) {
     console.error("Signature not found:", err);
+  }
+  try {
+    const googlePartnerBuffer = fs.readFileSync(googlePartnerPath);
+    googlePartnerBase64 = `data:image/png;base64,${googlePartnerBuffer.toString("base64")}`;
+  } catch (err) {
+    console.error("Google partner not found:", err);
   }
 
   const companyName = process.env.COMPANY_NAME || "Ofzen Technologies";
@@ -94,7 +102,7 @@ const generateCertificateHtml = (data) => {
 
         .watermark {
             position: fixed;
-            top: 50%;
+            top: 65%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: -1;
@@ -165,6 +173,7 @@ const generateCertificateHtml = (data) => {
             font-size: 10px;
             letter-spacing: 2.5px;
             text-transform: uppercase;
+            text-align: center;
             color: #7b818a;
         }
 
@@ -173,6 +182,7 @@ const generateCertificateHtml = (data) => {
             font-size: 38px;
             font-weight: 600;
             color: #0F172A;
+            text-align: center;
             margin-bottom: 3px;
         }
 
@@ -182,12 +192,16 @@ const generateCertificateHtml = (data) => {
             background: #2563eb;
             border-radius: 2px;
             margin-bottom: 12px;
+            display: flex;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .certify-text {
             font-size: 13px;
             color: #64748B;
             margin-bottom: 10px;
+            text-align: center;
             font-weight: 400;
         }
 
@@ -195,6 +209,7 @@ const generateCertificateHtml = (data) => {
             font-family: 'Playfair Display', Georgia, serif;
             font-size: 34px;
             font-style: italic;
+            text-align: center;
             color: #2563eb;
             font-weight: 400;
             margin-bottom: 14px;
@@ -205,6 +220,7 @@ const generateCertificateHtml = (data) => {
             font-size: 13px;
             color: #64748B;
             margin-bottom: 3px;
+            text-align: center;
         }
 
         .role-name {
@@ -212,28 +228,35 @@ const generateCertificateHtml = (data) => {
             font-weight: 500;
             color: #0F172A;
             margin-bottom: 1px;
+            text-align: center;
         }
 
         .company-at {
             font-size: 13px;
             color: #64748B;
             margin-bottom: 2px;
+            text-align: center;
         }
 
         .company-name2 {
             font-size: 16px;
             font-weight: 500;
             color: #2563eb;
+            text-align: center;
             margin-bottom: 14px;
         }
 
         .meta-row {
             display: flex;
             gap: 48px;
+            justify-content: center;
+            align-items: center;
             margin-bottom: 20px;
         }
 
-        .meta-item {}
+        .meta-item {
+            text-align: center;
+        }
 
         .meta-item-label {
             font-size: 10px;
@@ -301,6 +324,7 @@ const generateCertificateHtml = (data) => {
             margin-bottom: 20px;
             width: 160px;
         }
+
         .pSign-container img {
             height: 50px;
             margin-bottom: 20px;
@@ -362,16 +386,45 @@ const generateCertificateHtml = (data) => {
 
         .stamp-container {
             position: absolute;
-            bottom: 100px;
+            bottom: 170px;
             left: 50%;
             transform: translateX(-50%);
             z-index: -1;
         }
 
         .stamp-logo img {
-            height: 150px;
+            height: 120px;
             width: auto;
             filter: grayscale(1);
+        }
+
+        .google-partner-container {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            display: flex;
+            align-items: center;
+            transform: translateX(-50%);
+            z-index: -1;
+        }
+
+        .google-partner-img img {
+            padding: 10px;
+            border-right: 1px solid #E2E8F0;
+            height: 40px;
+            width: auto;
+        }
+
+        .google-partner-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-left: 10px;
+            padding-bottom:10px;
+            color: #94A3B8;
+            font-size: 8px;
         }
 
         .bottom-bar {
@@ -431,7 +484,8 @@ const generateCertificateHtml = (data) => {
             <div class="divider"></div>
 
             <p class="body-para">
-                During their tenure, ${intern.userId?.name} demonstrated commendable dedication, professionalism, and enthusiasm.
+                During their tenure, ${intern.userId?.name} demonstrated commendable dedication, professionalism, and
+                enthusiasm.
                 They
                 actively contributed to real-world projects, working under the guidance of our experienced mentors and
                 consistently delivering quality output throughout the internship period.
@@ -444,7 +498,8 @@ const generateCertificateHtml = (data) => {
             </p>
 
             <p class="closing-text">
-                We sincerely wish ${intern.userId?.name} every success in their future endeavors, and are confident that they will
+                We sincerely wish ${intern.userId?.name} every success in their future endeavors, and are confident that
+                they will
                 continue to
                 grow and excel in their professional journey.
             </p>
@@ -458,8 +513,8 @@ const generateCertificateHtml = (data) => {
                     </div>
                     <div class="sig-underline"></div>
                     <div class="sig-label">Dheeraj Bathi</div>
+                    <div class="sig-company">HR Manager</div>
                     <div class="sig-company">${companyName}</div>
-                    <div class="sig-company">${companyAddress}</div>
                 </div>
                 <div class="sig-block">
                     <div class="pSign-container">
@@ -467,21 +522,29 @@ const generateCertificateHtml = (data) => {
                     </div>
                     <div class="sig-underline"></div>
                     <div class="sig-label">Pavan Gollapalli</div>
+                    <div class="sig-company">CEO</div>
                     <div class="sig-company">${companyName}</div>
-                    <div class="sig-company">${companyAddress}</div>
                 </div>
 
-                
+
             </div>
             <div class="cert-id-block-bottom">
-                    
-                    <div class="verify">Verify at ${verifyUrl}</div>
-                </div>
+                <div class="verify">Verify at ${verifyUrl}</div>
+            </div>
         </div>
 
         <div class="stamp-container">
             <div class="stamp-logo">
                 ${stampBase64 ? `<img class="stamp" src="${stampBase64}" alt="Stamp">` : ""}
+            </div>
+        </div>
+        <div class="google-partner-container">
+            <div class="google-partner-img">
+                ${googlePartnerBase64 ? `<img src="${googlePartnerBase64}" alt="Google Partner">` : ""}
+            </div>
+            <div class="google-partner-label">
+                <p>ISSUED BY OFZEN</p>
+                <p>A GOOGLE CLOUD PARTNER</p>
             </div>
         </div>
 

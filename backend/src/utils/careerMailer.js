@@ -87,7 +87,9 @@ const sendRegistrationSuccessEmail = async (studentData) => {
  * Send approval emails (Offer Letter and Login Details)
  */
 const sendApprovalEmails = async (data) => {
-  const { name, email, offerLetterPath, role, domain } = data;
+  const { name, email, offerLetterPath, role, domain, company } = data;
+  const companyName = company === "UniPilot" ? "UniPilot" : "Ofzen Technologies";
+  const shortName = company === "UniPilot" ? "UniPilot" : "Ofzen";
 
   const transporter = nodemailer.createTransport({
     host: process.env.CAREERS_MAIL_HOST || "smtp.zoho.in",
@@ -101,9 +103,9 @@ const sendApprovalEmails = async (data) => {
 
   // 1. Send Offer Letter Email
   await transporter.sendMail({
-    from: `"Ofzen Careers" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
+    from: `"${shortName} Careers" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
-    subject: `Internship Onboarding Confirmation – Welcome to Ofzen!`,
+    subject: `Internship Onboarding Confirmation – Welcome to ${shortName}!`,
     html: `
       <body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, sans-serif;">
 
@@ -116,7 +118,7 @@ const sendApprovalEmails = async (data) => {
           <!-- Header -->
           <tr>
             <td style="background:#4f46e5; color:#ffffff; padding:20px; text-align:center;">
-              <h2 style="margin:0;">Welcome to Ofzen Technologies 🎉</h2>
+              <h2 style="margin:0;">Welcome to ${companyName} 🎉</h2>
             </td>
           </tr>
 
@@ -151,7 +153,7 @@ const sendApprovalEmails = async (data) => {
 
               <p>
                 Warm regards,<br>
-                <strong>Team Ofzen</strong>
+                <strong>Team ${shortName}</strong>
               </p>
 
             </td>
@@ -160,7 +162,7 @@ const sendApprovalEmails = async (data) => {
           <!-- Footer -->
           <tr>
             <td style="background:#f1f5f9; padding:15px; text-align:center; font-size:12px; color:#666;">
-              © 2026 Ofzen Technologies. All rights reserved.
+              © 2026 ${companyName}. All rights reserved.
             </td>
           </tr>
 
@@ -182,13 +184,13 @@ const sendApprovalEmails = async (data) => {
   // 2. Send Login Details Email
   const loginUrl = process.env.FRONTEND_URL || "https://work.ofzen.in";
   await transporter.sendMail({
-    from: `"Ofzen Support" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
+    from: `"${shortName} Support" <${process.env.CAREERS_MAIL_USER || "careers@ofzen.in"}>`,
     to: email,
-    subject: `Welcome to Ofzen — Student Portal Access`,
+    subject: `Welcome to ${shortName} — Student Portal Access`,
     html: `
       <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
         <h2>Welcome to the Team, ${name}!</h2>
-        <p>Your account has been activated. you can now log into the Ofzen Student Portal to access your curriculum, submit assignments, and track your progress.</p>
+        <p>Your account has been activated. you can now log into the ${shortName} Student Portal to access your curriculum, submit assignments, and track your progress.</p>
         
         <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 0;"><strong>Portal URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
@@ -199,7 +201,7 @@ const sendApprovalEmails = async (data) => {
         <p>If you have forgotten your password, you can use the "Forgot Password" link on the login page.</p>
         <p>We look forward to seeing your work!</p>
         <br>
-        <p>Best Regards,<br>Ofzen Technologies</p>
+        <p>Best Regards,<br>${companyName}</p>
       </div>
     `,
   });

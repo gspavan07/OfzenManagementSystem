@@ -8,7 +8,7 @@ const { generatePdfFromHtml } = require("../../utils/pdfGenerator");
 const generateOfferLetterHtml = (data) => {
   const { intern } = data;
 
-  const logoPath = path.join(__dirname, "logo.png");
+  const logoPath = path.join(__dirname, "uniPilotLogo.png");
   let logoBase64 = "";
   const signPath = path.join(__dirname, "dheerajSignature.png");
   let signBase64 = "";
@@ -25,10 +25,10 @@ const generateOfferLetterHtml = (data) => {
     console.error("Signature not found:", err);
   }
 
-  const companyName = process.env.COMPANY_NAME || "Ofzen Technologies";
-  const companyAddress = process.env.COMPANY_ADDRESS || "Bengaluru, Karnataka";
-  const companyWebsite = process.env.COMPANY_WEBSITE || "www.ofzen.in";
-  const companyEmail = "careers@ofzen.in";
+  const companyName = process.env.UNIPILOT_NAME || "UniPilot";
+  const companyAddress = process.env.UNIPILOT_ADDRESS || "Bengaluru, Karnataka";
+  const companyWebsite = process.env.UNIPILOT_WEBSITE || "www.unipilot.in";
+  const companyEmail = process.env.UNIPILOT_EMAIL || "careers@unipilot.in";
 
   const issueDate = new Date().toLocaleDateString("en-IN", {
     day: "numeric",
@@ -228,7 +228,7 @@ const generateOfferLetterHtml = (data) => {
         <div class="salutation">Dear <strong>${intern.userId?.name}</strong>,</div>
 
         <p class="body-text">
-            <strong>Congratulations from Ofzen Technologies.</strong>
+            <strong>Congratulations from ${companyName}.</strong>
         </p>
 
         <p class="body-text">

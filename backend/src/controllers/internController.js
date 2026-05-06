@@ -4,8 +4,11 @@ const Intern = require("../models/Intern");
 const User = require("../models/User");
 const path = require("path");
 const {
-  generateOfferLetterPdf,
+  generateOfferLetterPdf: generateOfzenOfferLetterPdf,
 } = require("../templates/offerLetter/offerLetterTemplate");
+const {
+  generateOfferLetterPdf: generateUniPilotOfferLetterPdf,
+} = require("../templates/offerLetter/uniPilotOfferLetterTemplate");
 const { sendApprovalEmails } = require("../utils/careerMailer");
 
 // ─── BATCHES ──────────────────────────────────────────────────────────────────
@@ -211,6 +214,7 @@ const createIntern = asyncHandler(async (req, res) => {
     course,
     paymentStatus,
     receiptNumber,
+    company,
   } = req.body;
   if (!userId || !batchId) {
     res.status(400);
@@ -225,6 +229,7 @@ const createIntern = asyncHandler(async (req, res) => {
     course,
     paymentStatus,
     receiptNumber,
+    company,
   });
   res.status(201).json({ success: true, intern });
 });
@@ -239,7 +244,7 @@ const approveIntern = asyncHandler(async (req, res) => {
   }
 
   // 1. Update Status & Details
-  const { batchId, workMode } = req.body;
+  const { batchId, workMode, company } = req.body;
 
   if (!batchId) {
     res.status(400);
@@ -249,6 +254,7 @@ const approveIntern = asyncHandler(async (req, res) => {
   intern.registrationStatus = "approved";
   intern.batchId = batchId;
   intern.workMode = workMode || "Remote";
+  intern.company = company || "Ofzen";
 
   await intern.save();
 
@@ -265,7 +271,12 @@ const approveIntern = asyncHandler(async (req, res) => {
   // 2. Generate Offer Letter
   try {
     const outputDir = path.join(__dirname, "../../uploads/pdfs/offer_letters");
-    const { absolutePath, fullUrl } = await generateOfferLetterPdf({
+    const generateFn =
+      intern.company === "UniPilot"
+        ? generateUniPilotOfferLetterPdf
+        : generateOfzenOfferLetterPdf;
+
+    const { absolutePath, fullUrl } = await generateFn({
       intern,
       outputDir,
     });
@@ -280,6 +291,7 @@ const approveIntern = asyncHandler(async (req, res) => {
       offerLetterPath: absolutePath,
       role: intern.internshipId.title,
       domain: intern.internshipId.domain,
+      company: intern.company,
     });
   } catch (error) {
     console.error("Error in approval pipeline:", error);

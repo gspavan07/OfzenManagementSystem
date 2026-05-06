@@ -1,11 +1,17 @@
 const { generatePdfBuffer } = require("../utils/pdfGenerator");
 const { generatePayslipHtml } = require("../templates/payslip/payslipTemplate");
 const {
-  generateCertificateHtml,
+  generateCertificateHtml: generateOfzenCertificateHtml,
 } = require("../templates/certificate/certificateTemplate");
 const {
-  generateOfferLetterHtml,
+  generateCertificateHtml: generateUniPilotCertificateHtml,
+} = require("../templates/certificate/uniPilotCertificateTemplate");
+const {
+  generateOfferLetterHtml: generateOfzenOfferLetterHtml,
 } = require("../templates/offerLetter/offerLetterTemplate");
+const {
+  generateOfferLetterHtml: generateUniPilotOfferLetterHtml,
+} = require("../templates/offerLetter/uniPilotOfferLetterTemplate");
 
 // Dummy data for previews
 const DUMMY_DATA = {
@@ -94,17 +100,27 @@ const previewTemplate = async (req, res) => {
       return res.status(400).json({ message: "Invalid template type" });
     }
 
+    const company = req.query.company || "Ofzen";
+
     switch (templateType) {
       case "payslip":
         html = generatePayslipHtml(data);
         filename = `payslip_template_preview.pdf`;
         break;
       case "certificate":
-        html = generateCertificateHtml(data);
+        const certFn =
+          company === "UniPilot"
+            ? generateUniPilotCertificateHtml
+            : generateOfzenCertificateHtml;
+        html = certFn(data);
         filename = `certificate_template_preview.pdf`;
         break;
       case "offer-letter":
-        html = generateOfferLetterHtml(data);
+        const offerFn =
+          company === "UniPilot"
+            ? generateUniPilotOfferLetterHtml
+            : generateOfzenOfferLetterHtml;
+        html = offerFn(data);
         filename = `offer_letter_template_preview.pdf`;
         break;
       default:

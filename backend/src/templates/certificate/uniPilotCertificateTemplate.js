@@ -8,15 +8,15 @@ const { generatePdfFromHtml } = require("../../utils/pdfGenerator");
 const generateCertificateHtml = (data) => {
   const { intern, certificate } = data;
 
-  const logoPath = path.join(__dirname, "logo.png");
+  const logoPath = path.join(__dirname, "uniPilotLogo.png");
   let logoBase64 = "";
-  const logoLightPath = path.join(__dirname, "logo_light.png");
-  let logoLightBase64 = "";
+  //   const logoLightPath = path.join(__dirname, "logo_light.png");
+  //   let logoLightBase64 = "";
   const dheerajSignPath = path.join(__dirname, "dheerajSignature.png");
   let dheerajSignBase64 = "";
   const pavanSignPath = path.join(__dirname, "pavanSignature.png");
   let pavanSignBase64 = "";
-  const stampPath = path.join(__dirname, "stamp.png");
+  const stampPath = path.join(__dirname, "stampUnipilot.png");
   let stampBase64 = "";
   const googlePartnerPath = path.join(__dirname, "google.png");
   let googlePartnerBase64 = "";
@@ -26,12 +26,12 @@ const generateCertificateHtml = (data) => {
   } catch (err) {
     console.error("Logo not found:", err);
   }
-  try {
-    const logoLightBuffer = fs.readFileSync(logoLightPath);
-    logoLightBase64 = `data:image/png;base64,${logoLightBuffer.toString("base64")}`;
-  } catch (err) {
-    console.error("Logo light not found:", err);
-  }
+  //   try {
+  //     const logoLightBuffer = fs.readFileSync(logoLightPath);
+  //     logoLightBase64 = `data:image/png;base64,${logoLightBuffer.toString("base64")}`;
+  //   } catch (err) {
+  //     console.error("Logo light not found:", err);
+  //   }
   try {
     const stampBuffer = fs.readFileSync(stampPath);
     stampBase64 = `data:image/png;base64,${stampBuffer.toString("base64")}`;
@@ -57,11 +57,10 @@ const generateCertificateHtml = (data) => {
     console.error("Google partner not found:", err);
   }
 
-  const companyName = process.env.COMPANY_NAME || "Ofzen Technologies";
-  const companyAddress =
-    process.env.COMPANY_ADDRESS || "Kakinada, Andhra Pradesh";
-  const companyWebsite = process.env.COMPANY_WEBSITE || "www.ofzen.in";
-  const companyEmail = "support@ofzen";
+  const companyName = process.env.UNIPILOT_NAME || "UniPilot";
+  const companyAddress = process.env.UNIPILOT_ADDRESS || "Bengaluru, Karnataka";
+  const companyWebsite = process.env.UNIPILOT_WEBSITE || "www.unipilot.in";
+  const companyEmail = process.env.UNIPILOT_EMAIL || "support@unipilot.in";
   const certVerifyBase =
     process.env.CERT_VERIFY_BASE_URL || "http://localhost:5173";
   const verifyUrl = `${certVerifyBase}/verify/${certificate.certificateId}`;
@@ -98,20 +97,22 @@ const generateCertificateHtml = (data) => {
             box-sizing: border-box;
         }
 
-
-
         .watermark {
             position: fixed;
-            top: 65%;
+            top: 63%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: -1;
             color: #2563eb;
-            font-size: 180px;
             font-weight: 700;
             opacity: 0.1;
             pointer-events: none;
             user-select: none;
+        }
+
+        .watermark img{
+            height: 200px;
+            width: auto;
         }
 
         .top-bar {
@@ -150,7 +151,7 @@ const generateCertificateHtml = (data) => {
         }
 
         .logo-container img {
-            height: 50px;
+            height: 40px;
             width: auto;
         }
 
@@ -441,7 +442,7 @@ const generateCertificateHtml = (data) => {
 <body>
     <div class="top-bar"></div>
     <div class="watermark">
-        ${logoLightBase64 ? `<img src="${logoLightBase64}" alt="Logo Light">` : ""}
+        ${logoBase64 ? `<img src="${logoBase64}" alt="Logo">` : ""}
     </div>
     <div class="container">
         <div class="letterhead">
@@ -543,7 +544,7 @@ const generateCertificateHtml = (data) => {
                 ${googlePartnerBase64 ? `<img src="${googlePartnerBase64}" alt="Google Partner">` : ""}
             </div>
             <div class="google-partner-label">
-                <p>ISSUED BY OFZEN</p>
+                <p>ISSUED BY ${companyName.toUpperCase()} (An Ofzen group company)</p>
                 <p>A GOOGLE CLOUD PARTNER</p>
             </div>
         </div>

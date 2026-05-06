@@ -6,9 +6,13 @@ const Intern = require("../models/Intern");
 const Certificate = require("../models/Certificate");
 const path = require("path");
 const {
-  generateCertificatePdf,
-  generateCertificateHtml,
+  generateCertificatePdf: generateOfzenCertificatePdf,
+  generateCertificateHtml: generateOfzenCertificateHtml,
 } = require("../templates/certificate/certificateTemplate");
+const {
+  generateCertificatePdf: generateUniPilotCertificatePdf,
+  generateCertificateHtml: generateUniPilotCertificateHtml,
+} = require("../templates/certificate/uniPilotCertificateTemplate");
 
 const PDF_DIR = path.join(__dirname, "../../uploads/pdfs");
 
@@ -197,7 +201,12 @@ const generateCertificate = asyncHandler(async (req, res) => {
 
   // Generate PDF
   try {
-    const { fullUrl } = await generateCertificatePdf({
+    const generateFn =
+      intern.company === "UniPilot"
+        ? generateUniPilotCertificatePdf
+        : generateOfzenCertificatePdf;
+
+    const { fullUrl } = await generateFn({
       intern,
       user: intern.userId,
       batch: intern.batchId,
@@ -248,12 +257,12 @@ const sendCertificateEmail = asyncHandler(async (req, res) => {
     html: `
       <div style="font-family: sans-serif; line-height: 1.6; color: #333;">
         <h2 style="color: #2563eb;">Congratulations, ${intern.userId.name}!</h2>
-        <p>We are pleased to inform you that you have successfully completed your internship program at <b>Ofzen Technologies</b>.</p>
+        <p>We are pleased to inform you that you have successfully completed your internship program at <b>${intern.company || "Ofzen Technologies"}</b>.</p>
         <p>Your official Internship Completion Certificate is attached to this email.</p>
         <br/>
         <p>We wish you all the best for your future endeavors!</p>
         <hr/>
-        <p style="font-size: 12px; color: #666;">This is an automated email from the Ofzen Management System.</p>
+        <p style="font-size: 12px; color: #666;">This is an automated email from the ${intern.company || "Ofzen"} Management System.</p>
       </div>
     `,
     type: "certificate",
@@ -301,7 +310,12 @@ const previewCertificate = asyncHandler(async (req, res) => {
   }
 
   // Generate HTML
-  const html = generateCertificateHtml({
+  const generateHtmlFn =
+    intern.company === "UniPilot"
+      ? generateUniPilotCertificateHtml
+      : generateOfzenCertificateHtml;
+
+  const html = generateHtmlFn({
     intern,
     certificate: { certificateId: "PREVIEW-ONLY", issueDate: new Date() },
   });

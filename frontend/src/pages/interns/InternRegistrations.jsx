@@ -76,6 +76,10 @@ const InternRegistrations = () => {
   const [course, setCourse] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [receiptNumber, setReceiptNumber] = useState("");
+  const [company, setCompany] = useState("Ofzen");
+
+  // Approval State
+  const [approvalCompany, setApprovalCompany] = useState("Ofzen");
 
   const pendingInterns = interns.filter(
     (i) => i.registrationStatus === "pending",
@@ -101,6 +105,7 @@ const InternRegistrations = () => {
     setCourse("");
     setPaymentStatus("pending");
     setReceiptNumber("");
+    setCompany("Ofzen");
     setModalOpen(true);
   };
 
@@ -135,6 +140,7 @@ const InternRegistrations = () => {
         course,
         paymentStatus,
         receiptNumber,
+        company,
       });
 
       toast.success("Intern registered successfully!");
@@ -152,6 +158,7 @@ const InternRegistrations = () => {
       setSelectedIntern(row);
       setApprovalBatchId("");
       setApprovalWorkMode("Remote");
+      setApprovalCompany("Ofzen");
       setApproveModalOpen(true);
       return;
     }
@@ -175,6 +182,7 @@ const InternRegistrations = () => {
       await internsApi.approve(selectedIntern._id, {
         batchId: approvalBatchId,
         workMode: approvalWorkMode,
+        company: approvalCompany,
       });
       toast.success("Intern approved and onboarded successfully!");
       setApproveModalOpen(false);
@@ -485,6 +493,21 @@ const InternRegistrations = () => {
                   </p>
                 )}
               </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                  Assigning Company
+                </label>
+                <select
+                  className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-border-focus)] transition-colors"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  required
+                >
+                  <option value="Ofzen">Ofzen</option>
+                  <option value="UniPilot">UniPilot</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -747,6 +770,21 @@ const InternRegistrations = () => {
                 <option value="Remote">Remote</option>
                 <option value="On-site">On-site</option>
                 <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                Issuing Company
+              </label>
+              <select
+                className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+                value={approvalCompany}
+                onChange={(e) => setApprovalCompany(e.target.value)}
+                required
+              >
+                <option value="Ofzen">Ofzen</option>
+                <option value="UniPilot">UniPilot</option>
               </select>
             </div>
           </div>

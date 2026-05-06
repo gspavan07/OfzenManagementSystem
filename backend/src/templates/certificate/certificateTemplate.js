@@ -386,7 +386,7 @@ const generateCertificateHtml = (data) => {
 
         .stamp-container {
             position: absolute;
-            bottom: 170px;
+            bottom: 140px;
             left: 50%;
             transform: translateX(-50%);
             z-index: -1;
@@ -400,7 +400,7 @@ const generateCertificateHtml = (data) => {
 
         .google-partner-container {
             position: absolute;
-            bottom: 100px;
+            bottom: 80px;
             left: 50%;
             display: flex;
             align-items: center;

@@ -7,6 +7,7 @@ const {
   createInternship,
   updateInternship,
   deleteInternship,
+  updateInternshipSchedule,
 } = require('../controllers/internshipController');
 
 router.use(protect);
@@ -14,6 +15,7 @@ router.use(protect);
 router.get('/', checkPermission('internBatches.view'), getInternships);
 router.post('/', checkPermission('internBatches.create'), createInternship);
 router.put('/:id', checkPermission('internBatches.edit'), updateInternship);
+router.put('/:id/schedule', checkPermission('internBatches.edit'), updateInternshipSchedule);
 router.delete('/:id', checkPermission('internBatches.delete'), deleteInternship);
 
 module.exports = router;

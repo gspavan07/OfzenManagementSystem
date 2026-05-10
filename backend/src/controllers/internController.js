@@ -52,6 +52,9 @@ const getBatchById = asyncHandler(async (req, res) => {
   const batch = await InternBatch.findById(req.params.id).populate(
     "mentorId",
     "name email",
+  ).populate(
+    "internshipId",
+    "title domain durationWeeks projectStartWeek techStack schedule",
   );
   if (!batch) {
     res.status(404);

@@ -11,6 +11,7 @@ import {
   Clock,
   BookOpen,
   Link,
+  Link2,
   CheckCircle,
   Download,
   Megaphone,
@@ -21,6 +22,8 @@ import {
   Lock,
   ChevronRight,
   Zap,
+  CalendarDays,
+  ExternalLink,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import {
@@ -45,6 +48,8 @@ const InternDashboard = () => {
   const announcements = annData?.announcements || [];
   const pinned = announcements.filter((a) => a.isPinned);
   const recent = announcements.filter((a) => !a.isPinned).slice(0, 3);
+
+  const [activeTab, setActiveTab] = useState("overview");
 
   if (internLoading) {
     return (
@@ -123,9 +128,34 @@ const InternDashboard = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b border-[var(--color-border)]">
+        {[
+          { key: "overview", label: "Overview", icon: BookOpen },
+          { key: "thisweek", label: "This Week's Schedule", icon: CalendarDays },
+        ].map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
+              activeTab === key
+                ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+                : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Learning & Project */}
+        {/* Left Column */}
         <div className="lg:col-span-2 space-y-8">
+          {activeTab === "thisweek" ? (
+            <ThisWeekSchedule intern={intern} internship={internship} />
+          ) : (
+            <>
           {/* Phase Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-gradient-to-br from-[var(--color-primary)]/10 to-transparent border-[var(--color-primary)]/20 relative overflow-hidden group">
@@ -340,6 +370,8 @@ const InternDashboard = () => {
               </div> */}
             </div>
           </Card>
+            </>
+          )}
         </div>
 
         {/* Right Column: Sidebar */}
@@ -512,6 +544,153 @@ const InternDashboard = () => {
           </Card>
         </div>
       </div>
+    </div>
+  );
+};
+
+// ─── This Week Schedule Component (Intern Read-only View) ─────────────────────
+
+const ThisWeekSchedule = ({ intern, internship }) => {
+  const completedCount = intern?.completedWeeks?.length || 0;
+  const currentWeek = completedCount + 1;
+  const totalWeeks = internship?.durationWeeks || 8;
+
+  // Cap at total weeks
+  const displayWeek = Math.min(currentWeek, totalWeeks);
+
+  const weekSchedule = internship?.schedule?.find((s) => s.week === displayWeek);
+  const hasSchedule = weekSchedule && weekSchedule.topic;
+
+  if (!hasSchedule) {
+    return (
+      <Card className="border-[var(--color-border)]">
+        <div className="p-10 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center mx-auto">
+            <CalendarDays className="w-8 h-8 text-[var(--color-primary)] opacity-50" />
+          </div>
+          <h3 className="font-bold text-lg text-[var(--color-text-primary)]">
+            Schedule Not Available Yet
+          </h3>
+          <p className="text-sm text-[var(--color-text-muted)] max-w-sm mx-auto">
+            Your mentor hasn't added the Week {displayWeek} schedule yet. Check back soon!
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Week header */}
+      <Card className="p-0 overflow-hidden border-[var(--color-primary)]/30 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent">
+        <div className="p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary)] flex flex-col items-center justify-center text-white shrink-0 shadow-lg shadow-[var(--color-primary)]/30">
+                <span className="text-[8px] font-bold uppercase tracking-widest">Wk</span>
+                <span className="text-xl font-black -mt-1">{displayWeek}</span>
+              </div>
+              <div>
+                <Badge
+                  variant="secondary"
+                  className="bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/20 mb-2 text-[10px] font-bold uppercase tracking-wider"
+                >
+                  Current Week
+                </Badge>
+                <h2 className="text-xl font-black text-[var(--color-text-primary)]">
+                  {weekSchedule.topic}
+                </h2>
+                {weekSchedule.description && (
+                  <p className="text-sm text-[var(--color-text-muted)] mt-1 leading-relaxed">
+                    {weekSchedule.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Week-level references */}
+          {weekSchedule.references?.length > 0 && (
+            <div className="mt-5 pt-5 border-t border-[var(--color-border)]">
+              <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Link2 className="w-3 h-3" /> Week Resources
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {weekSchedule.references.map((ref, i) => (
+                  <a
+                    key={i}
+                    href={ref.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 border border-[var(--color-primary)]/20 rounded-xl text-xs font-bold text-[var(--color-primary)] transition-all hover:shadow-sm"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    {ref.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Day-by-day cards */}
+      <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider px-1">
+        Day-by-Day Plan
+      </p>
+      {weekSchedule.days?.length > 0 ? (
+        <div className="grid grid-cols-1 gap-3">
+          {weekSchedule.days.map((day) => (
+            <Card
+              key={day.day}
+              className="border-[var(--color-border)] bg-white/[0.02] hover:border-[var(--color-primary)]/30 transition-all"
+            >
+              <div className="p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--color-bg-elevated)] flex flex-col items-center justify-center text-[var(--color-text-secondary)] border border-[var(--color-border)] shrink-0">
+                    <span className="text-[8px] font-bold uppercase">Day</span>
+                    <span className="text-sm font-black -mt-0.5">{day.day}</span>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h4 className="font-bold text-[var(--color-text-primary)] text-sm">
+                      {day.topic || <span className="text-[var(--color-text-muted)] font-normal italic">No topic defined</span>}
+                    </h4>
+                    {day.description && (
+                      <p className="text-xs text-[var(--color-text-muted)] leading-relaxed">
+                        {day.description}
+                      </p>
+                    )}
+                    {day.references?.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {day.references.map((ref, i) => (
+                          <a
+                            key={i}
+                            href={ref.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1 px-2.5 py-1 bg-white/5 hover:bg-white/10 border border-[var(--color-border)] hover:border-[var(--color-primary)]/30 rounded-lg text-[11px] font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-all"
+                          >
+                            <ExternalLink className="w-2.5 h-2.5" />
+                            {ref.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="border-[var(--color-border)]">
+          <div className="p-8 text-center">
+            <p className="text-sm text-[var(--color-text-muted)] italic">
+              No day-by-day breakdown available for this week yet.
+            </p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

@@ -72,6 +72,7 @@ export const internshipsApi = {
   create: (data) => api.post('/internships', data),
   update: (id, data) => api.put(`/internships/${id}`, data),
   delete: (id) => api.delete(`/internships/${id}`),
+  updateSchedule: (id, data) => api.put(`/internships/${id}/schedule`, data),
 };
 
 export const internshipProjectsApi = {

@@ -1,10 +1,19 @@
 const mongoose = require("mongoose");
 
+const referenceSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true, trim: true },
+    url: { type: String, required: true, trim: true },
+  },
+  { _id: false },
+);
+
 const daySchema = new mongoose.Schema(
   {
     day: { type: Number, required: true },
     topic: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
+    references: { type: [referenceSchema], default: [] },
   },
   { _id: false },
 );
@@ -14,6 +23,7 @@ const scheduleItemSchema = new mongoose.Schema(
     week: { type: Number, required: true },
     topic: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
+    references: { type: [referenceSchema], default: [] },
     days: [daySchema],
   },
   { _id: false },

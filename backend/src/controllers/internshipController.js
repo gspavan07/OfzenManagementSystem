@@ -45,9 +45,33 @@ const deleteInternship = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Internship role removed' });
 });
 
+// @desc    Update only the schedule of an internship role
+// @route   PUT /api/internships/:id/schedule
+// @access  Private/Mentor or Admin
+const updateInternshipSchedule = asyncHandler(async (req, res) => {
+  const { schedule } = req.body;
+
+  if (!Array.isArray(schedule)) {
+    res.status(400);
+    throw new Error('schedule must be an array');
+  }
+
+  const internship = await Internship.findById(req.params.id);
+  if (!internship) {
+    res.status(404);
+    throw new Error('Internship not found');
+  }
+
+  internship.schedule = schedule;
+  const updated = await internship.save();
+
+  res.json({ success: true, internship: updated });
+});
+
 module.exports = {
   getInternships,
   createInternship,
   updateInternship,
   deleteInternship,
+  updateInternshipSchedule,
 };

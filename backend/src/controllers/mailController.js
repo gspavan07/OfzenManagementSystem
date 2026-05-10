@@ -141,6 +141,42 @@ const sendCustomMail = asyncHandler(async (req, res) => {
   res.json({ success: true, ...result });
 });
 
+// POST /api/mail/send-batch
+const sendBatchCustomMail = asyncHandler(async (req, res) => {
+  const { batchId, subject, body } = req.body;
+  if (!batchId || !subject || !body) {
+    res.status(400);
+    throw new Error('batchId, subject, and body are required');
+  }
+
+  const interns = await Intern.find({ batchId }).populate('userId', 'name email');
+  if (!interns.length) {
+    res.status(404);
+    throw new Error('No interns found in this batch');
+  }
+
+  const bccEmails = interns
+    .map(i => i.userId?.email)
+    .filter(email => email);
+
+  if (!bccEmails.length) {
+    res.status(404);
+    throw new Error('No valid emails found in this batch');
+  }
+
+  const result = await sendMail({
+    sentByUserId: req.user.id,
+    toEmail: req.user.email, // Send 'To' to self
+    toName: req.user.name,
+    bcc: bccEmails,
+    subject,
+    html: body.replace(/\n/g, '<br>'),
+    type: 'custom',
+  });
+
+  res.json({ success: result.success, totalRecipients: bccEmails.length, via: result.via });
+});
+
 // GET /api/mail/logs
 const getMailLogs = asyncHandler(async (req, res) => {
   const { type, status } = req.query;
@@ -156,4 +192,4 @@ const getMailLogs = asyncHandler(async (req, res) => {
   res.json({ success: true, logs });
 });
 
-module.exports = { getMailConfig, saveMailConfig, testMailConfig, sendOfferLetter, sendPayslip, sendCustomMail, getMailLogs };
+module.exports = { getMailConfig, saveMailConfig, testMailConfig, sendOfferLetter, sendPayslip, sendCustomMail, sendBatchCustomMail, getMailLogs };

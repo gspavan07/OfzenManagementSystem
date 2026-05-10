@@ -129,4 +129,14 @@ export const templatesApi = {
   download: (type) => api.get(`/templates/preview/${type}?download=true`, { responseType: 'blob' }),
 };
 
-// Removed Mail API as per request
+// ─── Mail ──────────────────────────────────────────────────────────────────────
+export const mailApi = {
+  getConfig: () => api.get('/mail/config'),
+  saveConfig: (data) => api.post('/mail/config', data),
+  testConfig: () => api.post('/mail/config/test'),
+  sendOfferLetter: (internId) => api.post('/mail/send-offer-letter', { internId }),
+  sendPayslip: (payslipId) => api.post('/mail/send-payslip', { payslipId }),
+  sendCustom: (data) => api.post('/mail/send-custom', data),
+  sendBatch: (data) => api.post('/mail/send-batch', data),
+  getLogs: (params) => api.get('/mail/logs', { params }),
+};

@@ -15,7 +15,7 @@ import {
   Award,
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
-import { batchesApi, internshipProjectsApi, internsApi } from "../../api";
+import { batchesApi, internshipProjectsApi, internsApi, mailApi } from "../../api";
 import toast from "react-hot-toast";
 
 const MentorBatchDetails = () => {
@@ -36,6 +36,13 @@ const MentorBatchDetails = () => {
   const [assigningIntern, setAssigningIntern] = useState(null);
   const [availableProjects, setAvailableProjects] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
+
+  // Mail Modal State
+  const [mailModalOpen, setMailModalOpen] = useState(false);
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
+  const [targetIntern, setTargetIntern] = useState(null); // null means batch email
+  const [sendingMail, setSendingMail] = useState(false);
 
   // Progress State
   const [activeTab, setActiveTab] = useState("interns");
@@ -58,6 +65,79 @@ const MentorBatchDetails = () => {
       toast.error("Failed to update settings");
     } finally {
       setUpdatingSettings(false);
+    }
+  };
+
+  const openMailModal = (intern = null) => {
+    setTargetIntern(intern);
+    setMailSubject("");
+    setMailBody("");
+    setMailModalOpen(true);
+  };
+
+  const handleSendCustomMail = async () => {
+    if (!mailSubject || !mailBody) {
+      return toast.error("Subject and message are required");
+    }
+
+    setSendingMail(true);
+    try {
+      let result;
+      if (targetIntern) {
+        // Individual email
+        const { data } = await mailApi.sendCustom({
+          toEmail: targetIntern.userId.email,
+          toName: targetIntern.userId.name,
+          subject: mailSubject,
+          body: mailBody,
+        });
+        result = data;
+      } else {
+        // Batch email
+        const { data } = await mailApi.sendBatch({
+          batchId: id,
+          subject: mailSubject,
+          body: mailBody,
+        });
+        result = data;
+      }
+
+      if (result.via === "manual") {
+        toast.error(
+          (t) => (
+            <div className="flex flex-col gap-2">
+              <span className="font-bold text-orange-500">SMTP Not Configured!</span>
+              <span className="text-xs">
+                Your email was logged as "Manual" and not sent. Please set up your SMTP
+                in settings.
+              </span>
+              <Button
+                size="sm"
+                variant="primary"
+                className="w-fit h-7 text-[10px] py-0"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  navigate("/settings/mail");
+                }}
+              >
+                Go to Mail Settings
+              </Button>
+            </div>
+          ),
+          { duration: 6000 },
+        );
+      } else {
+        toast.success(
+          targetIntern
+            ? `Email sent to ${targetIntern.userId.name}`
+            : "Batch emails sent successfully",
+        );
+      }
+      setMailModalOpen(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send email");
+    } finally {
+      setSendingMail(false);
     }
   };
 
@@ -248,7 +328,18 @@ const MentorBatchDetails = () => {
                       Enrolled Interns
                     </h3>
                   </div>
-                  <Badge variant="secondary">{interns?.length} Total</Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{interns?.length} Total</Badge>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => openMailModal(null)}
+                      className="text-orange-500 hover:bg-orange-500/10 border-orange-500/20"
+                    >
+                      <Mail className="w-3.5 h-3.5 mr-1.5" />
+                      Send Batch Email
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -297,6 +388,15 @@ const MentorBatchDetails = () => {
                           </td>
                           <td className="py-4 px-2 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => openMailModal(intern)}
+                                className="shadow-sm border-[var(--color-border)] text-orange-500 hover:bg-orange-500/10"
+                                title="Send individual mail"
+                              >
+                                <Mail className="w-3.5 h-3.5" />
+                              </Button>
                               <Button
                                 variant="secondary"
                                 size="sm"
@@ -583,6 +683,62 @@ const MentorBatchDetails = () => {
           </Card>
         </div>
       </div>
+
+      {/* Mail Modal */}
+      <Modal
+        isOpen={mailModalOpen}
+        onClose={() => setMailModalOpen(false)}
+        title={targetIntern ? `Send Email to ${targetIntern.userId?.name}` : "Send Batch Email"}
+      >
+        <div className="space-y-4 pt-2">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+              Subject
+            </label>
+            <input
+              type="text"
+              className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)]"
+              placeholder="Enter email subject"
+              value={mailSubject}
+              onChange={(e) => setMailSubject(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+              Message Body
+            </label>
+            <textarea
+              rows={6}
+              className="w-full bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-primary)] resize-none"
+              placeholder="Type your message here..."
+              value={mailBody}
+              onChange={(e) => setMailBody(e.target.value)}
+            ></textarea>
+            <p className="text-[10px] text-[var(--color-text-muted)]">
+              Line breaks will be converted to &lt;br&gt; tags automatically.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setMailModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleSendCustomMail}
+              loading={sendingMail}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Send {targetIntern ? "Email" : "Batch Email"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Project Assignment Modal */}
       <Modal

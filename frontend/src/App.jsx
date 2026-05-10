@@ -20,6 +20,7 @@ import Announcements from "./pages/dashboard/Announcements";
 import MentorBatches from "./pages/mentor/MentorBatches";
 import InternDashboard from "./pages/interns/InternDashboard";
 import AccountSettings from "./pages/settings/AccountSettings";
+import MailSettings from "./pages/settings/MailSettings";
 import InternRevenue from "./pages/interns/InternRevenue";
 import DocumentTemplates from "./pages/settings/DocumentTemplates";
 import MentorBatchDetails from "./pages/mentor/MentorBatchDetails";
@@ -149,6 +150,7 @@ function App() {
             </Route>
 
             <Route path="/settings/account" element={<AccountSettings />} />
+            <Route path="/settings/mail" element={<MailSettings />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

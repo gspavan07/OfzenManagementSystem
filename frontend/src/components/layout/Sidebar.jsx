@@ -22,6 +22,7 @@ import {
   BriefcaseBusiness,
   IndianRupee,
   FileText,
+  Mail,
 } from "lucide-react";
 
 // ─── Nav item definition — permission-gated ───────────────────────────────────
@@ -134,6 +135,12 @@ const NAV_ITEMS = [
         permission: "profileManagement.edit",
       },
 
+      {
+        label: "Mail Settings",
+        icon: Mail,
+        to: "/settings/mail",
+        permission: "mailSystem.configureSmtp",
+      },
       {
         label: "Document Templates",
         icon: FileText,

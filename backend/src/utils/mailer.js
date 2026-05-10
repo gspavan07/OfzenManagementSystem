@@ -25,8 +25,8 @@ const sendMail = async (options) => {
 
   const logBase = {
     type,
-    toEmail,
-    toName,
+    toEmail: toEmail || (config ? config.smtpUser : 'Batch Recipients'),
+    toName: toName || (toEmail ? '' : 'Multiple Recipients'),
     subject,
     sentBy: sentByUserId,
     attachmentUrl: attachmentPath || null,
@@ -58,7 +58,8 @@ const sendMail = async (options) => {
 
     const mailOptions = {
       from: `"${config.fromName || 'Ofzen Technologies'}" <${config.smtpUser}>`,
-      to: `"${toName || toEmail}" <${toEmail}>`,
+      to: options.toEmail ? `"${toName || toEmail}" <${toEmail}>` : config.smtpUser,
+      bcc: options.bcc || undefined,
       subject,
       html,
     };

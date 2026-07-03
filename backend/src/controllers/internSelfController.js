@@ -247,7 +247,8 @@ const sendCertificateEmail = asyncHandler(async (req, res) => {
 
   // Resolve absolute path for attachment
   // Assuming pdfUrl is like /uploads/pdfs/xxx.pdf
-  const pdfPath = path.join(__dirname, "../../", cert.pdfUrl);
+  const filename = cert.pdfUrl.split("/").pop();
+  const pdfPath = path.join(PDF_DIR, filename);
 
   const mailResult = await sendMail({
     sentByUserId: req.user.id,

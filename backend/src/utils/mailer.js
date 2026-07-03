@@ -1,7 +1,7 @@
-const nodemailer = require('nodemailer');
-const MailConfig = require('../models/MailConfig');
-const MailLog = require('../models/MailLog');
-const { decrypt } = require('./encryption');
+const nodemailer = require("nodemailer");
+const MailConfig = require("../models/MailConfig");
+const MailLog = require("../models/MailLog");
+const { decrypt } = require("./encryption");
 
 /**
  * Send an email using the sender's configured SMTP credentials.
@@ -18,80 +18,99 @@ const { decrypt } = require('./encryption');
  * @returns {object} { success, via, logId }
  */
 const sendMail = async (options) => {
-  const { sentByUserId, toEmail, toName, subject, html, type, attachmentPath } = options;
-
-  // ── Try to load SMTP config ────────────────────────────────────────────────
-  const config = await MailConfig.findOne({ userId: sentByUserId, isActive: true });
-
+  const { sentByUserId, toEmail, toName, subject, html, type, attachmentPath } =
+    options;
+  // Try to load user-specific SMTP config from the database
+  const config = await MailConfig.findOne({
+    userId: sentByUserId,
+    isActive: true,
+  });
   const logBase = {
     type,
-    toEmail: toEmail || (config ? config.smtpUser : 'Batch Recipients'),
-    toName: toName || (toEmail ? '' : 'Multiple Recipients'),
+    toEmail:
+      toEmail ||
+      (config
+        ? config.smtpUser
+        : process.env.CAREERS_MAIL_USER || "Batch Recipients"),
+    toName: toName || (toEmail ? "" : "Multiple Recipients"),
     subject,
     sentBy: sentByUserId,
     attachmentUrl: attachmentPath || null,
   };
-
-  if (!config) {
-    // Manual fallback — no SMTP configured
-    const log = await MailLog.create({
-      ...logBase,
-      sentVia: 'manual',
-      status: 'manual_pending',
-    });
-    return { success: false, via: 'manual', logId: log._id };
-  }
-
-  // ── Decrypt password and send via SMTP ─────────────────────────────────────
+  let transporter;
+  let fromAddress;
   try {
-    const smtpPassword = decrypt(config.smtpPasswordEncrypted);
-
-    const transporter = nodemailer.createTransport({
-      host: config.smtpHost,
-      port: config.smtpPort,
-      secure: config.smtpPort === 465,
-      auth: {
-        user: config.smtpUser,
-        pass: smtpPassword,
-      },
-    });
-
+    if (!config) {
+      // Fallback to environment variables if configured
+      if (process.env.CAREERS_MAIL_USER && process.env.CAREERS_MAIL_PASS) {
+        transporter = nodemailer.createTransport({
+          host: process.env.CAREERS_MAIL_HOST || "smtp.zoho.in",
+          port: parseInt(process.env.CAREERS_MAIL_PORT) || 465,
+          secure: parseInt(process.env.CAREERS_MAIL_PORT) === 465,
+          auth: {
+            user: process.env.CAREERS_MAIL_USER,
+            pass: process.env.CAREERS_MAIL_PASS,
+          },
+        });
+        fromAddress = `"${process.env.COMPANY_NAME || "Ofzen Technologies"}" <${process.env.CAREERS_MAIL_USER}>`;
+      } else {
+        // Manual fallback — no SMTP configured in database or environment
+        const log = await MailLog.create({
+          ...logBase,
+          sentVia: "manual",
+          status: "manual_pending",
+        });
+        return { success: false, via: "manual", logId: log._id };
+      }
+    } else {
+      // Decrypt password and send via SMTP from database config
+      const smtpPassword = decrypt(config.smtpPasswordEncrypted);
+      transporter = nodemailer.createTransport({
+        host: config.smtpHost,
+        port: config.smtpPort,
+        secure: config.smtpPort === 465,
+        auth: {
+          user: config.smtpUser,
+          pass: smtpPassword,
+        },
+      });
+      fromAddress = `"${config.fromName || "Ofzen Technologies"}" <${config.smtpUser}>`;
+    }
     const mailOptions = {
-      from: `"${config.fromName || 'Ofzen Technologies'}" <${config.smtpUser}>`,
-      to: options.toEmail ? `"${toName || toEmail}" <${toEmail}>` : config.smtpUser,
+      from: fromAddress,
+      to: options.toEmail
+        ? `"${toName || toEmail}" <${toEmail}>`
+        : config
+          ? config.smtpUser
+          : process.env.CAREERS_MAIL_USER,
       bcc: options.bcc || undefined,
       subject,
       html,
     };
-
     if (attachmentPath) {
       mailOptions.attachments = [
         {
-          filename: attachmentPath.split('/').pop(),
+          filename: attachmentPath.split("/").pop(),
           path: attachmentPath,
         },
       ];
     }
-
     await transporter.sendMail(mailOptions);
-
     const log = await MailLog.create({
       ...logBase,
-      sentVia: 'smtp',
-      status: 'sent',
+      sentVia: "smtp",
+      status: "sent",
       sentAt: new Date(),
     });
-
-    return { success: true, via: 'smtp', logId: log._id };
+    return { success: true, via: "smtp", logId: log._id };
   } catch (err) {
     const log = await MailLog.create({
       ...logBase,
-      sentVia: 'smtp',
-      status: 'failed',
+      sentVia: "smtp",
+      status: "failed",
       errorMessage: err.message,
     });
-
-    return { success: false, via: 'smtp', error: err.message, logId: log._id };
+    return { success: false, via: "smtp", error: err.message, logId: log._id };
   }
 };
 
@@ -114,8 +133,8 @@ const testSmtpConnection = async (configData, testEmail) => {
   await transporter.sendMail({
     from: `"${configData.fromName}" <${configData.smtpUser}>`,
     to: testEmail,
-    subject: 'Ofzen Mail Config — Test Connection ✅',
-    html: '<p>Your SMTP configuration is working correctly.</p>',
+    subject: "Ofzen Mail Config — Test Connection ✅",
+    html: "<p>Your SMTP configuration is working correctly.</p>",
   });
 
   return true;
